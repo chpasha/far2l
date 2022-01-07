@@ -1,6 +1,6 @@
 name: Artifacts
 
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -15,8 +15,8 @@ jobs:
       matrix:
         include:
           - dependencies: "-minimal"
-          - dependencies: ""
-            options: "-DPYTHON=yes"
+          # - dependencies: ""
+          #  options: "-DPYTHON=yes"
 
     steps:
     - uses: actions/checkout@v2
@@ -44,6 +44,11 @@ jobs:
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
+      
+    - name: Create Deb
+      working-directory: ${{github.workspace}}/build
+      shell: bash
+      run: cpack
 
     - name: File Tree
       working-directory: ${{github.workspace}}/build
