@@ -59,7 +59,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: far2l-release${{ matrix.dependencies }}
-        path: 
+        path: |
           ${{github.workspace}}/build/install
           ${{github.workspace}}/build/far2l_*.deb
         
