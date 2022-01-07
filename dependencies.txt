@@ -9,4 +9,8 @@ libxerces-c-dev
 libarchive-dev
 libssh-dev
 
+libsmbclient-dev
+libnfs-dev
+libneon*-dev
+
 python3
