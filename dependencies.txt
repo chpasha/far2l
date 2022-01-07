@@ -11,6 +11,6 @@ libssh-dev
 
 libsmbclient-dev
 libnfs-dev
-libneon*-dev
+libneon27-dev
 
 python3
