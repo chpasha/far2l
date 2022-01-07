@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - dependencies: "-minimal"
-          # - dependencies: ""
-          #  options: "-DPYTHON=yes"
+          # - dependencies: "-minimal"
+          - dependencies: ""
+            options: "-DPYTHON=yes"
 
     steps:
     - uses: actions/checkout@v2
