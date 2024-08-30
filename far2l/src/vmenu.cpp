@@ -943,7 +943,7 @@ int VMenu::ProcessKey(FarKey Key)
 		case KEY_NUMENTER:
 		case KEY_ENTER: {
 			if (!ParentDialog || CheckFlags(VMENU_COMBOBOX)) {
-				if (ItemCanBeEntered(Item[SelectPos]->Flags)) {
+				if (SelectPos < 0 || ItemCanBeEntered(Item[SelectPos]->Flags)) {
 					EndLoop = TRUE;
 					Modal::ExitCode = SelectPos;
 				}
@@ -2180,7 +2180,8 @@ bool VMenu::CheckKeyHiOrAcc(DWORD Key, int Type, int Translate)
 
 		if (ItemCanHaveFocus(CurItem->Flags)
 				&& ((!Type && CurItem->AccelKey && Key == CurItem->AccelKey)
-						|| (Type && IsKeyHighlighted(CurItem->strName, Key, Translate, CurItem->AmpPos)))) {
+						|| (Type && !CheckFlags(VMENU_SHOWAMPERSAND)
+								&& IsKeyHighlighted(CurItem->strName, Key, Translate, CurItem->AmpPos)))) {
 			SetSelectPos(I, 1);
 			ShowMenu(true, false);
 

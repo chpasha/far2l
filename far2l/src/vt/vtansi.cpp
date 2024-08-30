@@ -803,6 +803,44 @@ struct VTAnsiContext
 				} }
 				return;
 			}
+
+			// kitty keys stuff
+
+			if (suffix == 'u') {
+
+				if (prefix2 == '=') {
+
+					// assuming mode always 1; we do not support other modes currently
+					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
+
+					return;
+
+				} else if (prefix2 == '>') {
+
+					// assuming mode always 1; we do not support other modes currently
+					vt_shell->SetKittyFlags(es_argc > 0 ? es_argv[0] : 0);
+
+					return;
+
+				} else if (prefix2 == '<') {
+
+					// we do not support mode stack currently, just reset flags
+					vt_shell->SetKittyFlags(0);
+
+					return;
+
+				} else if (prefix2 == '?') {
+
+					// reply with "CSI ? flags u"
+					char buf[64] = {0};
+					snprintf( buf, sizeof(buf), "\x1b[?%du", vt_shell->GetKittyFlags());
+					SendSequence( buf );
+
+					return;
+
+				}
+			}
+
 			// Ignore any other private sequences.
 			if (prefix2 != 0) {
 				fprintf(stderr, "Ignoring: %c %c %u %u\n", prefix2, suffix, es_argc, es_argv[0]);
@@ -1124,7 +1162,7 @@ struct VTAnsiContext
 
 				case 6: {	// ESC[6n Report cursor position
 					char buf[64] = {0};
-					sprintf( buf, "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
+					snprintf( buf, sizeof(buf), "\x1b[%d;%dR", Info.dwCursorPosition.Y - Info.srWindow.Top + 1, Info.dwCursorPosition.X + 1);
 					SendSequence( buf );
 				}
 				return;
@@ -1577,8 +1615,10 @@ void VTAnsi::Resume(struct VTAnsiState* state)
 
 void VTAnsi::OnStart()
 {
+	HANDLE con_hnd = _ctx->vt_shell->ConsoleHandle();
+	_ctx->saved_state.InitFromConsole(con_hnd);
 	TCHAR buf[MAX_PATH*2] = {0};
-	WINPORT(GetConsoleTitle)(_ctx->vt_shell->ConsoleHandle(), buf, ARRAYSIZE(buf) - 1 );
+	WINPORT(GetConsoleTitle)(con_hnd, buf, ARRAYSIZE(buf) - 1 );
 	_saved_title = buf;
 }
 
@@ -1589,7 +1629,7 @@ void VTAnsi::OnStop()
 	_incomplete.tail.clear();
 	_ctx->orig_palette.clear();
 	_ctx->alternative_screen_buffer.Reset(con_hnd);
-	_ctx->saved_state.ApplyToConsole(con_hnd, false);
+	//_ctx->saved_state.ApplyToConsole(con_hnd, false);
 	_ctx->ResetTerminal();
 	_ctx->ansi_state.font_state.FromConsoleAttributes(_ctx->saved_state.csbi.wAttributes);
 }
@@ -1620,6 +1660,7 @@ void VTAnsi::RevertConsoleState(HANDLE con_hnd)
 	}
 	WINPORT(SetConsoleScrollRegion)(con_hnd, 0, MAXSHORT);
 	WINPORT(SetConsoleTitle)(con_hnd, _saved_title.c_str());
+	_ctx->saved_state.ApplyToConsole(con_hnd);
 }
 
 void VTAnsi::Write(const char *str, size_t len)

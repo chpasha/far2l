@@ -795,6 +795,20 @@ $ #Panelvezérlő parancsok - egyebek#
     és húzzuk, vagy mozgathatók a #Ctrl-F5# lenyomása után a
     #kurzornyilakkal# is.
 
+    #Sticky controls# if your environment doesn't allow you to use some hotkeys
+due to TTY backend limitations or same hotkey used by other app you can following
+trick to achieve 'sticky' control keys behaviour. That means control key kept
+virtually pressed until next non-control key press:
+    #Ctrl+SPACE# gives sticky CONTROL key
+    #Alt+SPACE# gives sticky ALT key
+    #RCtrl+SPACE# gives sticky RCONTROL key
+    #RAlt+SPACE# gives sticky RALT key
+    Another way to achieve working hotkeys may be changing settings
+of desktop environment or external applications (in order to release needed hotkey combinations)
+or using exclusive handle hotkeys option
+in the ~Input Settings~@InputSettings@ (only in GUI backend mode).
+
+
 @SpecCmd
 $ #Special commands#
  Special FAR pseudo-command usually starting with a prefix and a colon are processed
@@ -1713,9 +1727,11 @@ $ #Parancs előzmények#
     a lista legördítve marad                            vagy #Ctrl-Ins#
 
   Toggle history view:                                         #Ctrl-T#
-             * with date lines + time column
+             * with date lines + time-path column
              * with date lines (as in far3)
              * plain history (as in far2)
+
+  Change path width in time-path column          #Ctrl-Left,Ctrl-Right#
 
   Show additional information                                      #F3#
 
@@ -1735,6 +1751,10 @@ $ #Parancs előzmények#
 
     A zárolt előzményelemek nem törlődnek az előzménylista módosulása
   vagy törlése esetén sem.
+
+    Remove duplicates method can be chosen in the ~Rendszer beállítások~@SystemSettings@.
+
+    For automatic exclusion from history, see ~dialog AutoComplete & History~@AutoCompleteSettings@.
 
     See also: common ~menu~@MenuCmd@ keyboard commands.
               common ~history~@HistoryCmd@ keyboard commands.
@@ -1872,6 +1892,8 @@ az azonos nevű fájloké.
     A parancs az almappák neveit és tartalmát nem hasonlítja össze, a fájlokat
 is csupán nevük, méretük és dátumuk alapján, így tartalmi eltéréseik nem hatnak
 a művelet eredményére.
+
+    See option #Case sensitive when compare or select# in ~Panel beállítások~@PanelSettings@.
 
 
 @UserMenu
@@ -2197,6 +2219,9 @@ a fastruktúrán a mappaváltáshoz #Entert# kell ütni.
   #kijelölhetők#            fájlokat, hanem a mappákat is kijelöli.
                           ^<wrap>Kikapcsolt opciónál csak a fájlok kapnak
 jelölést.
+
+  #Case sensitive when#     Influence on ~Mappák összehasonlítása~@CompFolders@
+  #compare or select#       and ~Fájlok kijelölése~@SelectFiles@.
 
   #Mappák is rendezhetők#   A kiterjesztés szerinti rendezés nem csak
   #kiterjesztés szerint#    fájlokra, hanem mappákra is lehetséges.
@@ -3565,6 +3590,9 @@ kijelölést levesz.
     Ha nincsenek kjelölt fájlok, a műveletek csak a kurzor alatti fájlra
 hatnak.
 
+    See options #A mappák is kijelölhetők#
+and #Case sensitive when compare or select# in ~Panel beállítások~@PanelSettings@.
+
 
 @CopyFiles
 $ #Másolás, mozgatás, átnevezés és linkek létrehozása#
@@ -4232,6 +4260,8 @@ erre a célra kifejlesztett segédprogramokkal és pluginekkel adhatunk a
 
     A makrónyelv leírása megtalálható a kísérő dokumentációban.
 
+    Online dokumentáció:
+    ~https://api.farmanager.com/ru/macro/~@https://api.farmanager.com/ru/macro/@
 
 @KeyMacroEditList
 $ #Makrók: a szerkesztő makrói#
