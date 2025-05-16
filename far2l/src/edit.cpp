@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "panel.hpp"
 #include "scrbuf.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "clipboard.hpp"
 #include "xlat.hpp"
 #include "datetime.hpp"
@@ -374,8 +374,38 @@ void Edit::FastShow()
 	size_t OutStrCells = 0;
 	for (int i = RealLeftPos; i < StrSize && int(OutStrCells) < EditLength; ++i) {
 		auto wc = Str[i];
-		if (wc == L' ' && Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
-			wc = L'\xB7';
+		if (Flags.Check(FEDITLINE_SHOWWHITESPACE) && Flags.Check(FEDITLINE_EDITORMODE)) {
+			switch(wc) {
+				case 0x0020: //space
+					wc = L'\xB7'; // ·
+					break;
+				case 0x00A0: //no-break space
+					wc = L'\xB0'; // °
+					break;
+				case 0x00AD: //soft hyphen
+					wc = L'\xAC'; // ¬
+					break;
+				case 0x2028: //line separator
+					wc = L'\x2424'; // ␤
+					break;
+				case 0x2029: //paragraph separator
+					wc = L'\xB6'; // ¶
+					break;
+				case 0x2000 ... 0x200A: //other spaces
+				case 0x202F: case 0x205F:
+				case 0x180E: case 0x3000:
+					wc = L'\x2420'; // ␠
+					break;
+				case 0x200B ... 0x200D: //zero-width
+				case 0x2060: case 0xFEFF:
+					wc = L'\x2422'; // ␢
+					break;
+				case 0x200E ... 0x200F: //text direction marks and shaping controls
+				case 0x202A ... 0x202E:
+				case 0x2066 ... 0x206F:
+					wc = L'\x2194'; // ↔
+					break;
+			}
 		}
 
 		if (wc == L'\t') {
@@ -387,14 +417,15 @@ void Edit::FastShow()
 								: L' ');
 			}
 		} else {
-			if (IsCharFullWidth(wc)) {
+			CharClasses cc(wc);
+			if (cc.FullWidth()) {
 				if (int(OutStrCells + 2) > EditLength) {
 					OutStr.emplace_back(L' ');
 					OutStrCells++;
 					break;
 				}
 				OutStrCells+= 2;
-			} else if (!IsCharXxxfix(wc) || i == RealLeftPos)
+			} else if (i == RealLeftPos || !cc.Xxxfix())
 				OutStrCells++;
 
 			OutStr.emplace_back(wc ? wc : L' ');
@@ -641,11 +672,11 @@ int Edit::CalcPosFwdTo(int Pos, int LimitPos) const
 		if (Pos < LimitPos)
 			do {
 				Pos++;
-			} while (Pos < LimitPos && Pos < StrSize && IsCharXxxfix(Str[Pos]));
+			} while (Pos < LimitPos && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 	} else
 		do {
 			Pos++;
-		} while (Pos < StrSize && IsCharXxxfix(Str[Pos]));
+		} while (Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 
 	return Pos;
 }
@@ -657,7 +688,7 @@ int Edit::CalcPosBwdTo(int Pos) const
 
 	do {
 		--Pos;
-	} while (Pos > 0 && IsCharXxxfix(Str[Pos]));
+	} while (Pos > 0 && Pos < StrSize && CharClasses(Str[Pos]).Xxxfix());
 
 	return Pos;
 }
@@ -2047,8 +2078,8 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 
 			// Обрабатываем табы
 			if (Str[Index] == L'\t' && TabExpandMode != EXPAND_ALLTABS) {
-				// Если есть необходимость делать корректировку табов и эта коректировка
-				// ещё не проводилась, то увеличиваем длину обрабатываемой строки на еденицу
+				// Если есть необходимость делать корректировку табов и эта корректировка
+				// ещё не проводилась, то увеличиваем длину обрабатываемой строки на единицу
 				if (bCorrectPos) {
 					++Pos;
 					*CorrectPos = 1;
@@ -2059,17 +2090,19 @@ int Edit::RealPosToCell(int PrevLength, int PrevPos, int Pos, int *CorrectPos)
 				TabPos+= TabSize - (TabPos % TabSize);
 			}
 			// Обрабатываем все остальные символы
-			else if (IsCharFullWidth(Str[Index])) {
-				TabPos+= 2;
-			} else if (!IsCharXxxfix(Str[Index])) {
-				TabPos++;
+			else {
+				CharClasses cc(Str[Index]);
+				if (cc.FullWidth()) {
+					TabPos+= 2;
+				} else if (!cc.Xxxfix()) {
+					TabPos++;
+				}
 			}
 
 		// Если позиция находится за пределами строки, то там точно нет табов и всё просто
 		if (Pos >= StrSize)
 			TabPos+= Pos - Index;
 	}
-
 	return TabPos;
 }
 
@@ -2090,23 +2123,23 @@ int Edit::CellPosToReal(int Pos)
 
 			CellPos = NewCellPos;
 		} else {
-			CellPos+= IsCharFullWidth(Str[Index]) ? 2 : 1;
-			while (Index + 1 < StrSize && IsCharXxxfix(Str[Index + 1])) {
+			CharClasses cc(Str[Index]);
+			CellPos+= cc.FullWidth() ? 2 : cc.Xxxfix() ? 0 : 1;
+			while (Index + 1 < StrSize && CharClasses(Str[Index + 1]).Xxxfix()) {
 				Index++;
 			}
 		}
 	}
-
 	return Index;
 }
 
 void Edit::SanitizeSelectionRange()
 {
 	if (SelEnd >= SelStart && SelStart >= 0) {
-		while (SelStart > 0 && IsCharXxxfix(Str[SelStart]))
+		while (SelStart > 0 && CharClasses(Str[SelStart]).Xxxfix())
 			--SelStart;
 
-		while (SelEnd < StrSize && IsCharXxxfix(Str[SelEnd]))
+		while (SelEnd < StrSize && CharClasses(Str[SelEnd]).Xxxfix())
 			++SelEnd;
 	}
 

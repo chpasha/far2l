@@ -424,6 +424,7 @@ void PluginImpl::GetOpenPluginInfo(struct OpenPluginInfo *Info)
 		}
 	}
 	else {
+		Info->Flags|= OPIF_HL_MARKERS_NOSHOW; // for site connections list always don't show markers
 		// for site connections list don't use current far2l panel modes
 		//  - only name column(s) without dependence on panel Align file extensions
 		static struct PanelMode PanelModesArray[10] = {
@@ -621,7 +622,7 @@ int PluginImpl::MakeDirectory(const wchar_t **Name, int OpMode)
 	}
 
 	if (!IS_SILENT(OpMode)) {
-		dir_name = ConfirmMakeDir(dir_name.c_str()).Ask();
+		dir_name = ConfirmMakeDir(dir_name).Ask();
 	}
 
 	if (dir_name.empty()) {
@@ -989,7 +990,7 @@ void PluginImpl::DismissRemoteHost()
 	{
 		SiteSpecification site_specification(StrWide2MB(_standalone_config), _location.server);
 		SitesConfig sc(site_specification.sites_cfg_location);
-		sc.SetDirectory(site_specification.site.c_str(), _location.ToString(false).c_str());
+		sc.SetDirectory(site_specification.site, _location.ToString(false));
 	}
 	_remote.reset();
 }

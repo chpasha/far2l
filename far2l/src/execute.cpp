@@ -253,7 +253,7 @@ public:
 	{
 		ProcessShowClock++;
 		if (CtrlObject && CtrlObject->CmdLine) {
-			CtrlObject->CmdLine->ShowBackground();
+			CtrlObject->CmdLine->ShowBackground(true);
 			CtrlObject->CmdLine->RedrawWithoutComboBoxMark();
 		}
 		//		CtrlObject->CmdLine->SetString(L"", TRUE);
@@ -298,6 +298,13 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_OPEN));
 	}
 
+	if (ExecFlags & EF_EXTERNALTERM) {
+		std::string OpenCmd = GetOpenShVerb("exec");
+		OpenCmd+= ' ';
+		OpenCmd+= CmdStr;
+		return farExecuteASynched(OpenCmd.c_str(), ExecFlags & (~EF_EXTERNALTERM));
+	}
+
 	const bool may_notify = (ExecFlags & (EF_NOTIFY | EF_NOWAIT)) == EF_NOTIFY && Opt.NotifOpt.OnConsole;
 	if (ExecFlags & (EF_HIDEOUT | EF_NOWAIT)) {
 		r = NotVTExecute(CmdStr, (ExecFlags & EF_NOWAIT) != 0, (ExecFlags & EF_SUDO) != 0);
@@ -309,6 +316,7 @@ static int farExecuteASynched(const char *CmdStr, unsigned int ExecFlags)
 		}
 
 	} else {
+		UnlockScreen Unlock;
 		FarExecuteScope fes((ExecFlags & EF_NOCMDPRINT) ? "" : CmdStr);
 		r = VTShell_Execute(CmdStr, (ExecFlags & EF_SUDO) != 0, (ExecFlags & EF_MAYBGND) != 0, may_notify);
 	}
@@ -538,4 +546,32 @@ int CommandLine::CmdExecute(const wchar_t *CmdLine, bool SeparateWindow, bool Di
 const wchar_t *PrepareOSIfExist(const wchar_t *CmdLine)
 {
 	return L"";
+}
+
+FARString ExecuteCommandAndGrabItsOutput(FARString cmd, const char *cmd_stub)
+{
+	if (cmd.GetLength() == 0 && (cmd_stub == nullptr || strlen(cmd_stub)<=0) )
+		return FARString();
+
+	FARString strTempName;
+
+	if (!FarMkTempEx(strTempName))
+		return FARString();
+
+	std::string exec_cmd =
+			"echo Waiting command to complete...; "
+			"echo You can use Ctrl+C to stop it, or Ctrl+Alt+C - to hardly terminate.; ";
+	if (cmd.GetLength() != 0) {
+		exec_cmd+= cmd.GetMB();
+	} else {
+		exec_cmd+= cmd_stub;
+	}
+
+	exec_cmd+= " >";
+	exec_cmd+= strTempName.GetMB();
+	exec_cmd+= " 2>&1";
+
+	farExecuteA(exec_cmd.c_str(), EF_NOCMDPRINT);
+
+	return strTempName;
 }

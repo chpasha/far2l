@@ -64,12 +64,16 @@ int WINAPI farIsAlpha(wchar_t Ch);
 int WINAPI farIsAlphaNum(wchar_t Ch);
 
 int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t *Owner, int Size);
+int WINAPI farGetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size);
 
 int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize);
 
 int WINAPI farGetReparsePointInfo(const wchar_t *Src, wchar_t *Dest, int DestSize);
 
 int WINAPI farGetPathRoot(const wchar_t *Path, wchar_t *Root, int DestSize);
+SIZE_T farAPIVTEnumBackground(HANDLE *con_hnds, SIZE_T count);
+BOOL  farAPIVTLogExportW(HANDLE con_hnd, DWORD vth_flags, const wchar_t *file);
+BOOL  farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file);
 
 int WINAPI FarGetPluginDirList(INT_PTR PluginNumber, HANDLE hPlugin, const wchar_t *Dir,
 		struct PluginPanelItem **pPanelItem, int *pItemsNumber);

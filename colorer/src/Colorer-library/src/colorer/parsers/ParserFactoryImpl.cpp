@@ -18,35 +18,35 @@ ParserFactory::Impl::~Impl()
 void ParserFactory::Impl::loadCatalog(const UnicodeString* catalog_path)
 {
   if (!catalog_path || catalog_path->isEmpty()) {
-    logger->debug("loadCatalog for empty path");
+    COLORER_LOG_DEBUG("loadCatalog for empty path");
 
-    auto env = colorer::Environment::getOSVariable("COLORER_CATALOG");
+    auto env = colorer::Environment::getOSEnv("COLORER_CATALOG");
     if (!env || env->isEmpty()) {
       throw ParserFactoryException("Can't find suitable catalog.xml for parse.");
     }
     base_catalog_path = colorer::Environment::normalizePath(env.get());
   }
   else {
-    logger->debug("loadCatalog for {0}", *catalog_path);
+    COLORER_LOG_DEBUG("loadCatalog for %", *catalog_path);
     base_catalog_path = colorer::Environment::normalizePath(catalog_path);
   }
 
   parseCatalog(*base_catalog_path);
-  logger->debug("start load hrc files");
+  COLORER_LOG_DEBUG("start load hrc files");
   for (const auto& location : hrc_locations) {
     loadHrcPath(location);
   }
 
-  logger->debug("end load hrc files");
+  COLORER_LOG_DEBUG("end load hrc files");
 }
 
 void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
 {
   try {
-    logger->debug("try load '{0}'", location);
-    if (XmlInputSource::isFileURI(*base_catalog_path, &location)) {
+    COLORER_LOG_DEBUG("try load '%'", location);
+    if (XmlInputSource::isFsURI(*base_catalog_path, &location)) {
       auto files = colorer::Environment::getFilesFromPath(base_catalog_path.get(), &location, ".hrc");
-      for (auto& file : files) {
+      for (const auto& file : files) {
         loadHrc(file, nullptr);
       }
     }
@@ -54,7 +54,7 @@ void ParserFactory::Impl::loadHrcPath(const UnicodeString& location)
       loadHrc(location, base_catalog_path.get());
     }
   } catch (const Exception& e) {
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("%", e.what());
   }
 }
 
@@ -64,8 +64,8 @@ void ParserFactory::Impl::loadHrc(const UnicodeString& hrc_path, const UnicodeSt
   try {
     hrc_library->loadSource(&dfis);
   } catch (Exception& e) {
-    logger->error("Can't load hrc: {0}", dfis.getPath());
-    logger->error("{0}", e.what());
+    COLORER_LOG_ERROR("Can't load hrc: %", dfis.getPath());
+    COLORER_LOG_ERROR("%", e.what());
   }
 }
 
@@ -89,7 +89,7 @@ std::vector<UnicodeString> ParserFactory::Impl::enumHrdClasses()
 {
   std::vector<UnicodeString> result;
   result.reserve(hrd_nodes.size());
-  for (auto& hrd_node : hrd_nodes) {
+  for (const auto& hrd_node : hrd_nodes) {
     result.push_back(hrd_node.first);
   }
   return result;
@@ -100,7 +100,7 @@ std::vector<const HrdNode*> ParserFactory::Impl::enumHrdInstances(const UnicodeS
   auto hash = hrd_nodes.find(classID);
   std::vector<const HrdNode*> result;
   result.reserve(hash->second->size());
-  for (auto& p : *hash->second) {
+  for (const auto& p : *hash->second) {
     result.push_back(p.get());
   }
   return result;
@@ -112,7 +112,7 @@ const HrdNode& ParserFactory::Impl::getHrdNode(const UnicodeString& classID, con
   if (hash == hrd_nodes.end()) {
     throw ParserFactoryException("can't find HRDClass '" + classID + "'");
   }
-  for (auto& p : *hash->second) {
+  for (const auto& p : *hash->second) {
     if (nameID.compare(p->hrd_name) == 0) {
       return *p;
     }
@@ -163,7 +163,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
   const UnicodeString* name_id;
   const UnicodeString name_default(HrdNameDefault);
   if (nameID == nullptr) {
-    auto hrd = colorer::Environment::getOSVariable("COLORER_HRD");
+    auto hrd = colorer::Environment::getOSEnv("COLORER_HRD");
     if (hrd) {
       name_id = hrd.get();
     }
@@ -183,8 +183,8 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
         XmlInputSource dfis(idx, base_catalog_path.get());
         mapper.loadRegionMappings(dfis);
       } catch (Exception& e) {
-        logger->error("Can't load hrd: ");
-        logger->error("{0}", e.what());
+        COLORER_LOG_ERROR("Can't load hrd: ");
+        COLORER_LOG_ERROR("%", e.what());
         throw ParserFactoryException("Error load hrd");
       }
     }
@@ -194,7 +194,7 @@ void ParserFactory::Impl::fillMapper(const UnicodeString& classID, const Unicode
 void ParserFactory::Impl::addHrd(std::unique_ptr<HrdNode> hrd)
 {
   if (hrd_nodes.find(hrd->hrd_class) == hrd_nodes.end()) {
-    hrd_nodes.emplace(hrd->hrd_class, std::make_unique<std::vector<std::unique_ptr<HrdNode>>>());
+    hrd_nodes.try_emplace(hrd->hrd_class, std::make_unique<std::vector<std::unique_ptr<HrdNode>>>());
   }
   hrd_nodes.at(hrd->hrd_class)->emplace_back(std::move(hrd));
 }

@@ -40,7 +40,6 @@
 
 IConsoleOutput *g_winport_con_out = nullptr;
 IConsoleInput *g_winport_con_in = nullptr;
-const wchar_t *g_winport_backend = L"";
 static BOOL g_winport_testing = FALSE;
 
 bool WinPortMainTTY(const char *full_exe_path, int std_in, int std_out,
@@ -235,33 +234,35 @@ static void ShimSigWinch(int sig)
 
 extern "C" void WinPortHelp()
 {
-	printf("FAR2L backend-specific options:\n");
-	printf("\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n");
-	printf("\t--notty - don't fallback to TTY backend if GUI backend failed\n");
-	printf("\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n");
-	printf("\t--norgb - don't use true (24-bit) colors\n");
-	printf("\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n");
-	printf("\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n");
-	printf("\t--x11 - force GUI backend to run on X11\n");
-	printf("\t--wayland - force GUI backend to run on Wayland\n");
-	printf("\t--ee or --ee=N - ESC expiration in msec (100 if unspecified) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n");
-	printf("\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n");
-	printf("\t--maximize - force maximize window upon launch (only for GUI backend)\n");
-	printf("\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n");
-	printf("\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n");
-    printf("    Backend-specific options also can be set via the FAR2L_ARGS environment variable\n");
-    printf("     (for example: export FAR2L_ARGS=\"--tty --nodetect --ee\" and then simple far2l to force start only TTY backend)\n");
+	printf("FAR2L backend-specific options:\n"
+			"\t--tty - force using TTY backend only (disable GUI/TTY autodetection)\n"
+			"\t--notty - don't fallback to TTY backend if GUI backend failed\n"
+			"\t--nodetect or --nodetect=[x|xi][f][w][a][k] - don't detect if TTY backend supports X11/Xi input and clipboard interaction extensions and/or disable detect f=FAR2l terminal extensions, w=win32, a=apple iTerm2, k=kovidgoyal's kitty input modes\n"
+			"\t--norgb - don't use true (24-bit) colors\n"
+			"\t--mortal - terminate instead of going to background on getting SIGHUP (default if in Linux TTY)\n"
+			"\t--immortal - go to background instead of terminating on getting SIGHUP (default if not in Linux TTY)\n"
+			"\t--x11 - force GUI backend to run on X11/Xwayland (force make GDK_BACKEND=x11)\n"
+			"\t--wayland - force GUI backend to run on Wayland (force make GDK_BACKEND=wayland)\n"
+			"\t--ee=N - ESC expiration in msec (default is 100, 0 to disable) to avoid need for double ESC presses (valid only in TTY mode without FAR2L extensions)\n"
+			"\t--primary-selection - use PRIMARY selection instead of CLIPBOARD X11 selection (only for GUI backend)\n"
+			"\t--maximize - force maximize window upon launch (only for GUI backend)\n"
+			"\t--nomaximize - dont maximize window upon launch even if its has saved maximized state (only for GUI backend)\n"
+			"\t--clipboard=SCRIPT - use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout\n"
+			"\n"
+			"All options (except -h and -u) also can be set via the FAR2L_ARGS environment variable\n"
+			" (for example: export FAR2L_ARGS=\"--tty\" to start far2l in tty mode by default)\n");
 }
 
 struct ArgOptions
 {
 	DWORD nodetect = NODETECT_NONE;
-	bool tty = false, far2l_tty = false, notty = false, norgb = false;
+	bool tty = false, far2l_tty = false, notty = false;
+	bool norgb = getenv("TERM") != nullptr && strcmp(getenv("TERM"), "screen.xterm-256color") == 0; // If in GNU Screen, default "norgb = true" to avoid unusable colours
 	bool mortal = false;
 	bool x11 = false;
 	bool wayland = false;
 	std::string ext_clipboard;
-	unsigned int esc_expiration = 0;
+	unsigned int esc_expiration = 100;
 	std::vector<char *> filtered_argv;
 
 	ArgOptions() = default;
@@ -314,7 +315,8 @@ struct ArgOptions
 			ext_clipboard = a + 12;
 
 		} else if (strstr(a, "--ee") == a) {
-			esc_expiration = (a[4] == '=') ? atoi(&a[5]) : 100;
+			if (a[4] == '=')
+				esc_expiration = atoi(&a[5]);
 
 		} else if (need_strdup) {
 			char *a_dup = strdup(a);
@@ -385,7 +387,7 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 	}
 
-	for (int i = 0; i < argc; ++i) {
+	for (int i = 1; i < argc; ++i) { // from 1 = skip self name here
 		arg_opts.ParseArg(argv[i], false);
 	}
 
@@ -407,6 +409,8 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 		}
 	}
 
+	if (argc>0)
+		arg_opts.filtered_argv.emplace(arg_opts.filtered_argv.begin(), argv[0]); // self name should be always first
 	if (!arg_opts.filtered_argv.empty()) {
 		argv = &arg_opts.filtered_argv[0];
 	}
@@ -506,8 +510,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 			typedef bool (*WinPortMainBackend_t)(WinPortMainBackendArg *a);
 			WinPortMainBackend_t WinPortMainBackend_p = (WinPortMainBackend_t)dlsym(gui_so, "WinPortMainBackend");
 			if (WinPortMainBackend_p) {
-				g_winport_backend = L"GUI";
-
 				tty_raw_mode.reset();
 				SudoAskpassImpl askass_impl;
 				SudoAskpassServer askpass_srv(&askass_impl);
@@ -532,7 +534,6 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	}
 
 	if (arg_opts.tty) {
-		g_winport_backend = L"tty";
 		if (!tty_raw_mode) {
 			tty_raw_mode.reset(new TTYRawMode(std_in, std_out));
 		}
@@ -594,9 +595,4 @@ extern "C" int WinPortMain(const char *full_exe_path, int argc, char **argv, int
 	g_winport_con_in = nullptr;
 
 	return result;
-}
-
-extern "C" const wchar_t *WinPortBackend()
-{
-	return g_winport_backend;
 }

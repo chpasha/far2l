@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "syslog.hpp"
 #include "interf.hpp"
 #include "keyboard.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "filefilter.hpp"
 #include "fileowner.hpp"
@@ -71,6 +71,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RegExp.hpp"
 #include "console.hpp"
 #include "InterThreadCall.hpp"
+#include "vtshell.h"
+#include "vtlog.h"
 
 #include "farversion.h"
 
@@ -299,9 +301,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 
 		*/
 		case ACTL_GETCOLOR: {
-			if ((int)(INT_PTR)Param1 < SIZE_ARRAY_PALETTE && (int)(INT_PTR)Param1 >= 0) {
+			if ((int)(INT_PTR)Param1 < SIZE_ARRAY_FARCOLORS && (int)(INT_PTR)Param1 >= 0) {
 
-				*(uint64_t *)Param2 = (uint64_t)Palette[(int)(INT_PTR)Param1];
+				*(uint64_t *)Param2 = (uint64_t)FarColors::setcolors[(int)(INT_PTR)Param1];
 				return TRUE;
 			}
 
@@ -314,13 +316,13 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 			Return - размер массива.
 		*/
 		case ACTL_GETARRAYCOLOR: {
-			if ((int)(intptr_t)Param1 > SIZE_ARRAY_PALETTE)
-				return SIZE_ARRAY_PALETTE;
+			if ((int)(intptr_t)Param1 > SIZE_ARRAY_FARCOLORS)
+				return SIZE_ARRAY_FARCOLORS;
 
 			if (Param2)
-				memcpy(Param2, Palette, (int)(intptr_t)Param1 * sizeof(Palette[0]));
+				memcpy(Param2, &FarColors::setcolors[0], (int)(intptr_t)Param1 * sizeof(FarColors::setcolors[0]));
 
-			return SIZE_ARRAY_PALETTE;
+			return SIZE_ARRAY_FARCOLORS;
 		}
 		/*
 			Param1=FARColor{
@@ -336,8 +338,9 @@ static INT_PTR WINAPI FarAdvControlSynched(INT_PTR ModuleNumber, int Command, vo
 				FarSetColors *Pal = (FarSetColors *)Param1;
 
 				if (Pal->Colors && Pal->StartIndex >= 0
-						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_PALETTE) {
-					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(Palette[0]));
+						&& Pal->StartIndex + Pal->ColorCount <= SIZE_ARRAY_FARCOLORS) {
+//					memmove(Palette + Pal->StartIndex, Pal->Colors, Pal->ColorCount * sizeof(Palette[0]));
+					FarColors::SetRange(Pal->StartIndex, Pal->ColorCount, Pal->Colors );
 
 					if (Pal->Flags & FCLR_REDRAW) {
 						ScrBuf.Lock();					// отменяем всякую прорисовку
@@ -1000,7 +1003,12 @@ static HANDLE FarDialogInitSynched(INT_PTR PluginNumber, int X1, int Y1, int X2,
 		return hDlg;
 
 	// ФИЧА! нельзя указывать отрицательные X2 и Y2
-	if (X2 < 0 || Y2 < 0)
+	if (X1 < 0 && X2 == 0)
+		X2 = 1;
+	if (Y1 < 0 && Y2 == 0)
+		Y2 = 1;
+	const auto checkCoord = [](int first, int second) { return second >= 0 && ((first < 0) ? (second > 0) : (first <= second)); };
+	if (!checkCoord(X1, X2) || !checkCoord(Y1, Y2))
 		return hDlg;
 
 	{
@@ -2097,6 +2105,17 @@ int WINAPI farGetFileOwner(const wchar_t *Computer, const wchar_t *Name, wchar_t
 	return static_cast<int>(strOwner.GetLength() + 1);
 }
 
+int WINAPI farGetFileGroup(const wchar_t *Computer, const wchar_t *Name, wchar_t *Group, int Size)
+{
+	FARString strGroup;
+	/*int Ret=*/GetFileGroup(Computer, Name, strGroup);
+
+	if (Group && Size)
+		far_wcsncpy(Group, strGroup, Size);
+
+	return static_cast<int>(strGroup.GetLength() + 1);
+}
+
 int WINAPI farConvertPath(CONVERTPATHMODES Mode, const wchar_t *Src, wchar_t *Dest, int DestSize)
 {
 	if (Src && *Src) {
@@ -2337,4 +2356,50 @@ DWORD WINAPI farGetCurrentDirectory(DWORD Size, wchar_t *Buffer)
 	}
 
 	return static_cast<DWORD>(strCurDir.GetLength() + 1);
+}
+
+SIZE_T farAPIVTEnumBackground(HANDLE *con_hnds, SIZE_T count)
+{
+	if (count == 0) {
+		return VTShell_Count();
+	}
+	VTInfos vts;
+	VTShell_Enum(vts);
+	for (size_t i = 0; i < count && i < vts.size(); ++i) {
+		con_hnds[i] = vts[i].con_hnd;
+	}
+	return vts.size();
+}
+
+
+BOOL farAPIVTLogExportA(HANDLE con_hnd, DWORD vth_flags, const char *file)
+{
+	const auto &saved_path = VTLog::GetAsFile(con_hnd,
+		(vth_flags & VT_LOGEXPORT_COLORED) != 0,
+		(vth_flags & VT_LOGEXPORT_WITH_SCREENLINES) != 0,
+		file);
+	if (saved_path.empty())
+		return FALSE;
+
+	if (!*file) {
+		strncpy((char *)file, saved_path.c_str(), MAX_PATH);
+	}
+
+	return TRUE;
+}
+
+BOOL farAPIVTLogExportW(HANDLE con_hnd, DWORD vth_flags, const wchar_t *file)
+{
+	const auto &saved_path = VTLog::GetAsFile(con_hnd,
+		(vth_flags & VT_LOGEXPORT_COLORED) != 0,
+		(vth_flags & VT_LOGEXPORT_WITH_SCREENLINES) != 0,
+		Wide2MB(file).c_str());
+	if (saved_path.empty())
+		return FALSE;
+
+	if (!*file) {
+		wcsncpy((wchar_t *)file, StrMB2Wide(saved_path).c_str(), MAX_PATH);
+	}
+
+	return TRUE;
 }

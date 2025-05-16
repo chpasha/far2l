@@ -48,7 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "manager.hpp"
 #include "scrbuf.hpp"
 #include "syslog.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "strmix.hpp"
 #include "console.hpp"
 #include "vtshell.h"
@@ -505,6 +505,35 @@ void Text(int X, int Y, uint64_t Color, const WCHAR *Str)
 	Text(Str);
 }
 
+void Text(const WCHAR Ch, uint64_t Color, size_t Length)
+{
+	if ( !Length )
+		return;
+
+	int X1 = CurX;
+	int Y1 = CurY;
+	int X2 = CurX + Length;
+	int Y2 = CurY;
+
+	if (X1 < 0)
+		X1 = 0;
+	if (Y1 < 0)
+		Y1 = 0;
+
+	if (X2 > ScrX)
+		X2 = ScrX;
+	if (Y2 > ScrY)
+		Y2 = ScrY;
+
+	ScrBuf.FillRect(X1, Y1, X2, Y2, Ch, Color);
+	CurX += Length;
+}
+
+void Text(const WCHAR Ch, size_t Length)
+{
+	Text(Ch, CurColor, Length);
+}
+
 void Text(const WCHAR *Str, size_t Length)
 {
 	if (Length == (size_t)-1)
@@ -533,7 +562,7 @@ void Text(const WCHAR *Str, size_t Length)
 			CI_SET_WCHAR(BufPtr[nCells], Str[i]);
 		}
 		CI_SET_ATTR(BufPtr[nCells], CurColor);
-		if (IsCharFullWidth(Str[i])) {
+		if (CharClasses(Str[i]).FullWidth()) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		}
@@ -581,7 +610,7 @@ void TextEx(const WCHAR *Str, size_t Length)
 
 //		CI_SET_ATTR(BufPtr[nCells], CurColor);
 
-		if (IsCharFullWidth(Str[i])) {
+		if (CharClasses(Str[i]).FullWidth()) {
 			++nCells;
 			CI_SET_WCATTR(BufPtr[nCells], 0, CurColor);
 		}
@@ -1134,9 +1163,10 @@ int HiStrCellsCount(const wchar_t *Str)
 
 				Length+= Count / 2;
 			} else {
-				if (IsCharFullWidth(*Str))
+				CharClasses cc(*Str);
+				if (cc.FullWidth())
 					Length+= 2;
-				else if (!IsCharXxxfix(*Str))
+				else if (!cc.Xxxfix())
 					Length+= 1;
 				Str++;
 			}
@@ -1177,9 +1207,10 @@ int HiFindRealPos(const wchar_t *Str, int Pos, BOOL ShowAmp)
 				}
 			}
 
-			if (IsCharFullWidth(*Str))
+			CharClasses cc(*Str);
+			if (cc.FullWidth())
 				VisPos+= 2;
-			else if (!IsCharXxxfix(*Str))
+			else if (!cc.Xxxfix())
 				VisPos+= 1;
 			Str++;
 			RealPos++;
@@ -1214,7 +1245,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 					return Pos - 2;
 				}
 
-				if (Pos > 1 && IsCharFullWidth(Str[Pos - 1]))
+				if (Pos > 1 && CharClasses(Str[Pos - 1]).FullWidth())
 					return Pos - 2;
 
 				return Pos - 1;
@@ -1234,7 +1265,7 @@ int HiFindNextVisualPos(const wchar_t *Str, int Pos, int Direct)
 
 				return Pos + 2;
 			} else {
-				return IsCharFullWidth(*Str) ? Pos + 2 : Pos + 1;
+				return CharClasses(*Str).FullWidth() ? Pos + 2 : Pos + 1;
 			}
 		}
 	}

@@ -1,13 +1,16 @@
 .\" -*- mode: troff; coding: UTF-8 -*-
 .\"TOPICS "Topics:"
-.TH FAR2L 1 "31-07-24" "FAR2L Version 2.6.3" "Linux fork of FAR Manager v2"
+.TH FAR2L 1 "April 2025" "FAR2L Version 2.6.5" "Linux fork of FAR Manager v2"
 .\"SKIP_SECTION"
 .SH "НАИМЕНОВАНИЕ"
- far2l \- Файловый менеджер, работающая в текстовом режиме программа, со встроенным терминалом и другими полезными функциями.
+far2l \- Двухпанельный файловый менеджер, работающий в текстовом режиме, со встроенным терминалом и другими полезными функциями.
 .\"SKIP_SECTION"
 .SH "СИНТАКСИС"
 .B far2l
 [\fI\,ОПЦИИ\/\fR] [\fB\-cd \fI\,АПУТЬ\/\fR \fB\-cd \fI\,ППУТЬ\/\fR]]
+.br
+.B far2ledit
+[\fI\,ОПЦИИ\/\fR] [\fI\,ФАЙЛ\/\fR]
 .\"NODE "DESCRIPTION"
 .SH "ОПИСАНИЕ"
 .B far2l
@@ -43,7 +46,9 @@
 Не выполнять макросы автозапуска.
 .TP
 \fB\-u\fR \fI\,ПОЛЬЗОВАТЕЛЬ\/\fR OR \fI\,/ПОЛНЫЙ/ПУТЬ\/\fR
-Позволяет использовать раздельные настройки для различных \fI\,ПОЛЬЗОВАТЕЛей\/\fR или расположений в файловой системе по \fI\,/ПОЛНОМУ/ПУТИ\/\fR.
+Позволяет использовать раздельные настройки для различных \fI\,ПОЛЬЗОВАТЕЛей\/\fR
+или расположений в файловой системе по \fI\,/ПОЛНОМУ/ПУТИ\/\fR
+(перекрывает значение переменной среды \fB\,FARSETTINGS\/\fR).
 .TP
 \fB\-v\fR \fI\,ФАЙЛ\/\fR
 Просмотреть указанный \fI\,ФАЙЛ\/\fR.
@@ -89,13 +94,13 @@
 Перейти в фоновый режим при получении сигнала SIGHUP (по умолчанию, если не в Linux TTY).
 .TP
 \fB\-\-x11\fP
-force GUI backend to run on X11
+Принудительная работа режима GUI под X11/Xwayland (принудительно выставляет GDK_BACKEND=x11)
 .TP
 \fB\-\-wayland\fP
-force GUI backend to run on Wayland
+Принудительная работа режима GUI под Wayland (принудительно выставляет GDK_BACKEND=wayland)
 .TP
-\fB\-\-ee\fP, \fB\-\-ee\fP=\fI\,N\/\fR
-Срок действия ESC \fI\,N\/\fR мсек (100 по умолчанию), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
+\fB\-\-ee\fP=\fI\,N\/\fR
+Срок действия ESC в мсек (по умолчанию 100, укажите 0 для отключения), чтобы избежать необходимости двойного нажатия ESC (действительно только в режиме TTY без расширений FAR2L).
 .TP
 \fB\-\-primary-selection\fP
 Использовать PRIMARY selection вместо CLIPBOARD X11 selection. Этот аргумент применим только для far2l, который работает в режиме WX.
@@ -108,10 +113,18 @@ dont maximize window upon launch even if its has saved maximized state (only for
 .TP
 \fB\-\-clipboard=\fI\,SCRIPT\/\fR\fP
 use external clipboard handler script that implements get/set text clipboard data via its stdin/stdout
-.P
-Параметры режимой интерфейса также могут быть установлены через переменную окружения \fB\,FAR2L_ARGS\/\fR
+.EE
+.\"NODE "ENVIRONMENT"
+.\"DONT_SPLIT"
+.SH "ПЕРЕМЕННЫЕ ОКРУЖЕНИЯ"
+.TP
+\fBFARSETTINGS\fR\fP
+Переопределяет расположение пользовательских настроек и конфигурационных файлов (см. параметр \fB\-u\fR).
+.TP
+\fBFAR2L_ARGS\fR\fP
+Все параметры (кроме \fB\-h\fR и \fB\-u\fR) также могут быть установлены через переменную окружения \fB\,FAR2L_ARGS\/\fR
 .EX
-(например: #export FAR2L_ARGS="--tty --nodetect --ee"# и затем просто far2l для принудительного запуска только режима TTY).
+(например: export FAR2L_ARGS="--tty --nodetect" и затем просто far2l для принудительного запуска только режима TTY).
 .EE
 .\"NODE "FULL HELP"
 .SH "ПОЛНАЯ СПРАВКА"

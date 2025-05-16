@@ -18,10 +18,10 @@
 #include <errno.h>
 #include <iostream>
 #include <fstream>
-#include <sys/ioctl.h> 
-#include <sys/wait.h> 
+#include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <condition_variable>
-#include <base64.h> 
+#include <base64.h>
 #include <StackSerializer.h>
 #include <ScopeHelpers.h>
 #include "dirmix.hpp"
@@ -34,17 +34,17 @@
 #include "vtshell_ioreaders.h"
 #include "vtshell_mouse.h"
 #include "../WinPort/src/SavedScreen.h"
-#define __USE_BSD 
-#include <termios.h> 
-#include "palette.hpp"
+#define __USE_BSD
+#include <termios.h>
+#include "farcolors.hpp"
 #include "AnsiEsc.hpp"
 #include "TestPath.h"
+#include "vtshell_translation.h"
 
-#define BRACKETED_PASTE_SEQ_START "\x1b[200~"
-#define BRACKETED_PASTE_SEQ_STOP  "\x1b[201~"
-
-const char *VT_TranslateSpecialKey(const WORD key, bool ctrl, bool alt, bool shift, unsigned char keypad = 0,
-	WCHAR uc = 0);
+#define BRACKETED_PASTE_SEQ_START  "\x1b[200~"
+#define BRACKETED_PASTE_SEQ_STOP   "\x1b[201~"
+#define FOCUS_CHANGED_SEQ_ACTIVE   "\x1b[I"
+#define FOCUS_CHANGED_SEQ_INACTIVE "\x1b[O"
 
 #if 0 //change to 1 to enable verbose I/O reports to stderr
 static void DbgPrintEscaped(const char *info, const char *s, size_t l)
@@ -57,13 +57,13 @@ static void DbgPrintEscaped(const char *info, const char *s, size_t l)
 		} else if (c <= 32 || c > 127) {
 			char zz[64]; sprintf(zz, "\\%02x", (unsigned int)(unsigned char)c);
 			msg+= zz;
-		} else 
+		} else
 			msg+= (char)(unsigned char)c;
 	}
 	fprintf(stderr, "VT %s: '%s'\n", info, msg.c_str());
 }
 #else
-# define DbgPrintEscaped(i, s, l) 
+# define DbgPrintEscaped(i, s, l)
 #endif
 
 int VTShell_Leader(char *const shell_argv[], const char *pty);
@@ -83,6 +83,24 @@ std::string VTSanitizeHistcontrol()
 	return hc_override;
 }
 
+const char *GetSystemShell()
+{
+	const char *env_shell = getenv("SHELL");
+	if (!env_shell || !*env_shell) {
+		return "/bin/sh";
+	}
+
+	const char *slash = strrchr(env_shell, '/');
+	// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
+	if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
+	 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
+	 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
+		return "bash";
+	}
+
+	return env_shell;
+}
+
 class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 {
 	HANDLE _console_handle = NULL;
@@ -100,12 +118,13 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	std::atomic<unsigned char> _keypad{0};
 	std::atomic<bool> _bracketed_paste_expected{false};
 	std::atomic<bool> _win32_input_mode_expected{false};
+	std::atomic<bool> _focus_change_expected{false};
 	std::atomic<int> _kitty_kb_flags{0};
 	INPUT_RECORD _last_window_info_ir;
 	std::unique_ptr<VTFar2lExtensios> _far2l_exts;
 	std::unique_ptr<VTMouse> _mouse;
 	std::mutex _read_state_mutex, _write_term_mutex;
-	uint32_t _mouse_expectations{0};
+	uint32_t _mouse_mode{0};
 
 	std::string _start_marker, _exit_marker;
 	std::string _host_id;
@@ -113,24 +132,6 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	bool _may_notify{false};
 	std::atomic<bool> _allow_osc_clipset{false};
 	std::string _init_user_profile;
-
-	static const char *GetSystemShell()
-	{
-		const char *env_shell = getenv("SHELL");
-		if (!env_shell || !*env_shell) {
-			return "/bin/sh";
-		}
-
-		const char *slash = strrchr(env_shell, '/');
-		// avoid using fish and csh for a while, it requires changes in Opt.strQuotedSymbols and some others
-		if (strcmp(slash ? slash + 1 : env_shell, "fish") == 0
-		 || strcmp(slash ? slash + 1 : env_shell, "csh") == 0
-		 || strcmp(slash ? slash + 1 : env_shell, "tcsh") == 0 ) {
-			return "bash";
-		}
-
-		return env_shell;
-	}
 
 	int ExecLeaderProcess()
 	{
@@ -235,37 +236,37 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		exit(err);
 		return -1;
 	}
-	
+
 	void UpdateTerminalSize(int fd_term)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = { };
 		if (WINPORT(GetConsoleScreenBufferInfo)(ConsoleHandle(), &csbi )
 					&& csbi.dwSize.X && csbi.dwSize.Y) {
 			fprintf(stderr, "UpdateTerminalSize: %u x %u\n", csbi.dwSize.X, csbi.dwSize.Y);
-			struct winsize ws = {(unsigned short)csbi.dwSize.Y, 
+			struct winsize ws = {(unsigned short)csbi.dwSize.Y,
 				(unsigned short)csbi.dwSize.X, 0, 0};
 			if (ioctl( fd_term, TIOCSWINSZ, &ws )==-1)
 				perror("VT: ioctl(TIOCSWINSZ)");
 		}
 	}
-	
+
 	bool InitTerminal()
 	{
 		int fd_term = posix_openpt( O_RDWR | O_NOCTTY ); //use -1 to verify pipes fallback functionality
 		_slavename.clear();
 		if (fd_term!=-1) {
 			MakeFDCloexec(fd_term);
-			
+
 			if (grantpt(fd_term)==0 && unlockpt(fd_term)==0) {
 				UpdateTerminalSize(fd_term);
 				const char *slavename = ptsname(fd_term);
 				if (slavename && *slavename)
 					_slavename = slavename;
 				else
-					perror("VT: ptsname");				
+					perror("VT: ptsname");
 			} else
 				perror("VT: grantpt/unlockpt");
-				
+
 			if (_slavename.empty()) {
 				CheckedCloseFD(fd_term);
 			}
@@ -287,7 +288,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 			MakeFDCloexec(fd_in[1]);
 			MakeFDCloexec(fd_out[0]);
-			
+
 			_pipes_fallback_in = fd_in[0];
 			_pipes_fallback_out = fd_out[1];
 			_fd_in = fd_in[1];
@@ -322,7 +323,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 	{
 		if (!InitTerminal())
 			return false;
-		
+
 		int r = ExecLeaderProcess();
 		if (r == -1) {
 			perror("VT: exec leader");
@@ -333,7 +334,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		usleep(300000);//give it time to initialize, otherwise additional command copy will be echoed
 		return true;
 	}
-	
+
 
 	virtual bool OnProcessOutput(const char *buf, int len) //called from worker thread
 	{
@@ -358,7 +359,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		return !_exit_marker.empty();
 	}
-	
+
 	virtual void OnTerminalResized()
 	{
 		if (!_slavename.empty())
@@ -372,7 +373,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		OnTerminalResized();
 		_last_window_info_ir = ir;
 	}
-	
+
 	virtual void OnInputMouse(const MOUSE_EVENT_RECORD &MouseEvent)
 	{
 		//fprintf(stderr, "OnInputMouse: %x\n", MouseEvent.dwEventFlags);
@@ -450,10 +451,25 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				fprintf(stderr, "VT: OnInputKeyDown - write error %d\n", errno);
 			}
 		} else {
-			fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n", 
+			fprintf(stderr, "VT: not translated keydown: VK=0x%x MODS=0x%x char=0x%x\n",
 				KeyEvent.wVirtualKeyCode, KeyEvent.dwControlKeyState,
 				KeyEvent.uChar.UnicodeChar );
-		}		
+		}
+	}
+
+	virtual void OnFocusChanged() // called from worker thread
+	{
+		if (_focus_change_expected) {
+			bool active = WINPORT(IsConsoleActive)() != FALSE;
+			const char *seq = active ? FOCUS_CHANGED_SEQ_ACTIVE : FOCUS_CHANGED_SEQ_INACTIVE;
+			if (!WriteTerm(seq, strlen(seq))) {
+				fprintf(stderr, "VT: OnFocusChanged - write error %d\n", errno);
+			} else {
+				fprintf(stderr, "VT: OnFocusChanged - %s\n", active ? "active" : "inactive");
+			}
+		} else {
+				fprintf(stderr, "VT: OnFocusChanged - SKIPPED\n");
+		}
 	}
 
 	void OnCtrlC(bool alt)
@@ -463,7 +479,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "VT: Ctrl+Alt+C - killing them hardly...\n");
 			SendSignalToVT(SIGKILL);
 			DetachTerminal();
-			
+
 		} else if (_slavename.empty()) {//pipes fallback
 			SendSignalToVT(SIGINT);
 		}
@@ -505,7 +521,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		//called in input thread context
 		//we're input, stop output and remember _vta state
-		
+
 		StopAndStart<VTOutputReader> sas(_output_reader);
 		VTAnsiSuspend vta_suspend(_vta);
 		if (!vta_suspend)
@@ -532,26 +548,34 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_keypad = keypad;
 	}
 
-	virtual void OnMouseExpectation(MouseExpectation mex, bool enable)
+	virtual void OnMouseExpectation(MouseMode mex, bool enable)
 	{
 		fprintf(stderr, "VT::OnMouseExpectation: %u\n", mex);
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
-		const auto prev_mouse_expectations = _mouse_expectations;
+		const auto prev_mouse_mode = _mouse_mode;
 		if (enable) {
-			_mouse_expectations|= mex;
+			_mouse_mode|= mex;
 		} else {
-			_mouse_expectations&= ~(uint32_t)mex;
+			_mouse_mode&= ~(uint32_t)mex;
 		}
-		if (prev_mouse_expectations != _mouse_expectations) {
+		if (prev_mouse_mode != _mouse_mode) {
 			_mouse.reset();
-			_mouse.reset(new VTMouse(this, _mouse_expectations));
+			_mouse.reset(new VTMouse(this, _mouse_mode));
 		}
 	}
 
 	virtual void OnBracketedPasteExpectation(bool enabled)
 	{
 		_bracketed_paste_expected = enabled;
+	}
+
+	virtual void OnFocusChangeExpectation(bool enabled)
+	{
+		bool was_enabled = _focus_change_expected.exchange(enabled);
+		if (!was_enabled) {
+			OnFocusChanged();
+		}
 	}
 
 	virtual void OnWin32InputMode(bool enabled)
@@ -675,20 +699,30 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 				std::lock_guard<std::mutex> lock(_read_state_mutex); // stop input readout
 				SavedScreen saved_scr;
 				ScrBuf.FillBuf();
-				auto choice = Message(MSG_KEEPBACKGROUND, 3,
-					Msg::TerminalClipboardAccessTitle,
-					Msg::TerminalClipboardSetText,
-					Msg::TerminalClipboardAccessBlock,		// 0
-					Msg::TerminalClipboardSetAllowOnce,		// 1
-					Msg::TerminalClipboardSetAllowForCommand);	// 2
-				if (choice != 1 && choice != 2) {
+				int choice;
+				do { // prevent quick thoughtless tap Enter or Space or Esc in dialog
+					choice = Message(MSG_KEEPBACKGROUND, 4,
+						Msg::TerminalClipboardAccessTitle,
+						Msg::TerminalClipboardSetText,
+						L"...",	// 0 - stub select for thoughtless tap
+						Msg::TerminalClipboardAccessBlock,		// 1
+						Msg::TerminalClipboardSetAllowOnce,		// 2
+						Msg::TerminalClipboardSetAllowForCommand);	// 3
+				} while (choice <= 0 );
+				if (choice != 2 && choice != 3) {
 					return;
 				}
-				if (choice == 2) {
+				if (choice == 3) {
 					_allow_osc_clipset = true;
 				}
 			}
 			OnTerminalResized(); // window could resize during dialog box processing
+		}
+
+		// remove "c;" prefix if any
+		size_t pos = str.rfind(';');
+		if (pos != std::string::npos) {
+			str.erase(0, pos + 1);
 		}
 
 		std::vector<unsigned char> plain;
@@ -703,7 +737,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 		CopyToClipboard(ws.c_str());
 	}
-	
+
 	virtual void InjectInput(const char *str)
 	{
 		_input_reader.InjectInput(str, strlen(str));
@@ -736,18 +770,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 
 		return out;
 	}
-	
+
 	std::string TranslateKeyEvent(const KEY_EVENT_RECORD &KeyEvent)
 	{
 		if (KeyEvent.wVirtualKeyCode) {
-
 			const bool ctrl = (KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)) != 0;
 			const bool alt = (KeyEvent.dwControlKeyState & (RIGHT_ALT_PRESSED|LEFT_ALT_PRESSED)) != 0;
 			const bool shift = (KeyEvent.dwControlKeyState & (SHIFT_PRESSED)) != 0;
 
 			if (KeyEvent.bKeyDown) {
 
-				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK && !_kitty_kb_flags) {
+				if (!ctrl && !shift && !alt && KeyEvent.wVirtualKeyCode==VK_BACK && !(_kitty_kb_flags & 8)) {
 					//WCM has a setting for that, so probably in some cases backspace should be returned as is
 					char backspace[] = {127, 0};
 					return backspace;
@@ -780,200 +813,28 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			}
 
 			if (_kitty_kb_flags) {
-
-				// References:
-				// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
-				// https://learn.microsoft.com/en-us/windows/win32/inputdev/virtual-key-codes
-
-				char buffer[64] = {0};
-
-				// fixme: KEYPAD 5 работает как F5, а надо чтоб как F3
-
-				int keycode = towlower(KeyEvent.uChar.UnicodeChar);
-
-				int base = 0;
-				if ((KeyEvent.wVirtualKeyCode >= 'A') && (KeyEvent.wVirtualKeyCode <= 'Z')) {
-					base = towlower(KeyEvent.wVirtualKeyCode);
-					if (base == keycode) { base = 0; }
+				std::string as_kitty = VT_TranslateKeyToKitty(KeyEvent, _kitty_kb_flags, _keypad);
+				if (as_kitty.length() > 0) {
+					return as_kitty;
 				}
-
-				// workaround for tty backend
-				if (base && !keycode) { keycode = base; }
-
-				int shifted = 0;
-
-				// (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))
-				// is workaround for far2l wx as it is not sending Shift state for Char events
-				// See
-				// ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
-				// and below in wxMain.cpp: dwControlKeyState not set
-				if (shift || (KeyEvent.uChar.UnicodeChar && iswupper(KeyEvent.uChar.UnicodeChar))) {
-					shifted = KeyEvent.uChar.UnicodeChar;
-				}
-
-				int modifiers = 0;
-
-				if (shift) modifiers |= 1;
-				if (alt)   modifiers |= 2;
-				if (ctrl)  modifiers |= 4;
-				if (KeyEvent.dwControlKeyState & CAPSLOCK_ON) modifiers |= 64;
-				if (KeyEvent.dwControlKeyState & NUMLOCK_ON)  modifiers |= 128;
-
-				modifiers += 1; // as spec requres
-
-				char suffix = 'u';
-
-				// apply modifications for special keys
-
-				switch (KeyEvent.wVirtualKeyCode) {
-					case VK_ESCAPE:    keycode = 27;  break;
-					case VK_RETURN:    keycode = 13;  break;
-
-					case VK_TAB:       keycode = 9;   break;
-					case VK_BACK:      keycode = 127; break;
-
-					case VK_INSERT:    keycode = 2;   suffix = '~'; break;
-					case VK_DELETE:    keycode = 3;   suffix = '~'; break;
-
-					case VK_LEFT:      keycode = 1;   suffix = 'D'; break;
-					case VK_RIGHT:     keycode = 1;   suffix = 'C'; break;
-					case VK_UP:        keycode = 1;   suffix = 'A'; break;
-					case VK_DOWN:      keycode = 1;   suffix = 'B'; break;
-
-					case VK_PRIOR:     keycode = 5;   suffix = '~'; break;
-					case VK_NEXT:      keycode = 6;   suffix = '~'; break;
-
-					case VK_HOME:      keycode = 1;   suffix = 'H'; break;
-					case VK_END:       keycode = 1;   suffix = 'F'; break;
-
-					case VK_F1:        keycode = 11;  suffix = '~'; break;
-					case VK_F2:        keycode = 12;  suffix = '~'; break;
-					case VK_F3:        keycode = 13;  suffix = '~'; break;
-					case VK_F4:        keycode = 14;  suffix = '~'; break;
-					case VK_F5:        keycode = 15;  suffix = '~'; break;
-
-					case VK_F6:        keycode = 17;  suffix = '~'; break;
-					case VK_F7:        keycode = 18;  suffix = '~'; break;
-					case VK_F8:        keycode = 19;  suffix = '~'; break;
-					case VK_F9:        keycode = 20;  suffix = '~'; break;
-					case VK_F10:       keycode = 21;  suffix = '~'; break;
-
-					case VK_F11:       keycode = 23;  suffix = '~'; break;
-					case VK_F12:       keycode = 24;  suffix = '~'; break;
-				}
-
-				// avoid sending base char if it is equal to keycode
-				if (base == keycode) { base = 0; }
-
-				int flags = _kitty_kb_flags;
-
-
-				if (!(flags & 8)) { // "Report all keys as escape codes" disabled
-					// do not sent modifiers themselfs
-					if (!keycode && (modifiers > 1)) {
-						return "";
-					}
-				}
-
-				// Записываем ESC-последовательность
-
-				// CSI unicode-key-code:shifted-key:base-layout-key ; modifiers:event-type ; text-as-codepoints u
-
-				// Переменная для отслеживания текущей длины строки в буфере
-				int len = 0;
-
-				// Старт последовательности
-				len += snprintf(buffer + len, sizeof(buffer) - len, "\x1B[");
-
-				// Часть 1
-
-				// Добавляем значение keycode
-				len += snprintf(buffer + len, sizeof(buffer) - len, "%i", keycode);
-
-				if ((flags & 4) && (shifted || base)) { // "report alternative keys" enabled
-
-					len += snprintf(buffer + len, sizeof(buffer) - len, ":");
-
-					if (shifted) {
-						// Добавляем значение shifted
-						len += snprintf(buffer + len, sizeof(buffer) - len, "%i", shifted);
-					}
-
-					if (base) {
-
-						// Добавляем значение base
-						len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", base);
-					}
-				}
-
-				// Часть 2
-
-				if ((modifiers > 1) || ((flags & 2) && !KeyEvent.bKeyDown)) {
-
-					len += snprintf(buffer + len, sizeof(buffer) - len, ";");
-
-					// Добавляем значение modifiers
-					len += snprintf(buffer + len, sizeof(buffer) - len, "%i", modifiers);
-
-					if ((flags & 2) && !KeyEvent.bKeyDown) {
-						// Добавляем значение для типа события (1 для keydown, 2 для repeat, 3 для keyup)
-						// fixme: repeat unimplemented
-						len += snprintf(buffer + len, sizeof(buffer) - len, ":%i", 3);
-					}
-				}
-
-				// Часть 3
-
-				if ((flags & 16) && KeyEvent.uChar.UnicodeChar) { // "text as code points" enabled
-
-					if (!((modifiers > 1) || ((flags & 2) && !KeyEvent.bKeyDown))) {
-						// Если часть 2 пропущена, добавим ";", чтобы обозначить это
-						len += snprintf(buffer + len, sizeof(buffer) - len, ";");
-					}
-
-					// Добавляем значение UnicodeChar
-					len += snprintf(buffer + len, sizeof(buffer) - len, ";%i", KeyEvent.uChar.UnicodeChar);
-				}
-
-				// Финал
-
-				// Добавляем значение suffix
-				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", suffix);
-
-				if (!(flags & 8) && KeyEvent.uChar.UnicodeChar && !alt && !ctrl) { // "Report all keys as escape codes" disabled
-					// just send text
-					len = snprintf(buffer, sizeof(buffer), "%lc", KeyEvent.uChar.UnicodeChar);
-				}
-
-				// Финальный 0
-				len += snprintf(buffer + len, sizeof(buffer) - len, "%c", 0);
-
-				/*
-				FILE* f = fopen("far2l_k.log", "a");
-				fprintf(f, "%s\n", buffer);
-				fclose(f);
-				*/
-
-				return buffer;
 			}
 
 			if (_win32_input_mode_expected) {
-				char buffer[64] = {0};
-				snprintf(buffer, sizeof(buffer), "\x1B[%i;%i;%i;%i;%i;%i_",
+				return StrPrintf("\x1B[%i;%i;%i;%i;%i;%i_",
 						 KeyEvent.wVirtualKeyCode,
 						 KeyEvent.wVirtualScanCode,
 						 KeyEvent.uChar.UnicodeChar,
 						 KeyEvent.bKeyDown,
 						 KeyEvent.dwControlKeyState,
-						 KeyEvent.wRepeatCount
-					);
-				return buffer;
+						 KeyEvent.wRepeatCount);
 			}
 
-			if (!KeyEvent.bKeyDown) { return ""; }
+			if (!KeyEvent.bKeyDown)
+				return std::string();
 
 			const char *spec = VT_TranslateSpecialKey(
 				KeyEvent.wVirtualKeyCode, ctrl, alt, shift, _keypad, KeyEvent.uChar.UnicodeChar);
+
 			if (spec)
 				return spec;
 		}
@@ -981,10 +842,10 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		wchar_t wz[3] = {KeyEvent.uChar.UnicodeChar, 0};
 		if (_slavename.empty() && wz[0] == '\r') //pipes fallback
 			wz[0] = '\n';
-		
+
 		return Wide2MB(&wz[0]);
 	}
-	
+
 	void SendSignalToVT(int sig)
 	{
 		if (_leader_pid == -1) {
@@ -1003,7 +864,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 			fprintf(stderr, "%s: kill(%d, %d) -> %d errno=%d\n", __FUNCTION__, _leader_pid, sig, r, errno);
 		}
 	}
-	
+
 	void DetachTerminal()
 	{
 		FDScope dev_null(open("/dev/null", O_RDWR));
@@ -1141,7 +1002,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		if (!Startup())
 			return;
 	}
-	
+
 	virtual ~VTShell()
 	{
 		fprintf(stderr, "~VTShell this=%p\n", this);
@@ -1236,6 +1097,7 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		_vta.OnStop();
 		_allow_osc_clipset = false;
 		_bracketed_paste_expected = false;
+		_focus_change_expected = false;
 		DeliverPendingWindowInfo();
 		if (_console_kill_requested) {
 			_console_kill_requested = false;
@@ -1243,10 +1105,17 @@ class VTShell : VTOutputReader::IProcessor, VTInputReader::IProcessor, IVTShell
 		}
 
 		std::lock_guard<std::mutex> lock(_read_state_mutex);
+		// reset special terminal modes to avoid messing up of
+		// terminal if application that used them exited abnormally
+		_bracketed_paste_expected = false;
+		_win32_input_mode_expected = false;
+		_focus_change_expected = false;
+		_kitty_kb_flags = 0;
+		_mouse_mode = 0;
 		_far2l_exts.reset();
-		_host_id.clear();
 		_mouse.reset();
-		_mouse_expectations = 0;
+		// cleanup also NetRocks per-session identifier
+		_host_id.clear();
 		return true;
 	}
 
@@ -1320,7 +1189,7 @@ static int VTShell_ExecuteCommonTail(bool completed)
 }
 
 int VTShell_Execute(const char *cmd, bool need_sudo, bool may_bgnd, bool may_notify)
-{	
+{
 	VTShell_BusyScope vts_bs;
 	if (!vts_bs.owner) {
 		fprintf(stderr, "%s('%s') - not owner\n", __FUNCTION__, cmd);

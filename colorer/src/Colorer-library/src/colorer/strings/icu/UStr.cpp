@@ -6,6 +6,11 @@ UnicodeString UStr::to_unistr(const int number)
   return {std::to_string(number).c_str()};
 }
 
+UnicodeString UStr::to_unistr(const std::string& str)
+{
+  return {str.c_str(), static_cast<int32_t>(str.length()), Encodings::ENC_UTF8};
+}
+
 std::string UStr::to_stdstr(const UnicodeString* str)
 {
   std::string out_str;
@@ -225,7 +230,7 @@ bool UStr::HexToUInt(const UnicodeString& str_hex, unsigned int* result)
     *result = std::stoul(UStr::to_stdstr(&s), nullptr, 16);
     return true;
   } catch (std::exception& e) {
-    logger->error("Can`t convert {0} to int. {1}", str_hex, e.what());
+    COLORER_LOG_ERROR("Can`t convert % to int. %", str_hex, e.what());
     return false;
   }
 }
@@ -241,24 +246,3 @@ int32_t UStr::indexOfIgnoreCase(const UnicodeString& str1, const UnicodeString& 
   auto tmp_str2 = str2;
   return tmp_str1.toUpper().indexOf(tmp_str2.toUpper(), pos);
 }
-
-#ifndef COLORER_FEATURE_LIBXML
-std::unique_ptr<XMLCh[]> UStr::to_xmlch(const UnicodeString* str)
-{
-  // XMLCh and UChar are the same size
-  std::unique_ptr<XMLCh[]> out_s;
-  if (str) {
-    auto len = str->length();
-    out_s = std::make_unique<XMLCh[]>(len + 1);
-    str->extract(0, len, out_s.get());
-    out_s[len] = 0;
-  }
-  return out_s;
-}
-
-std::string UStr::to_stdstr(const XMLCh* str)
-{
-  std::string _string = std::string(xercesc::XMLString::transcode(str));
-  return _string;
-}
-#endif

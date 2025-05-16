@@ -398,6 +398,15 @@ struct Options
 	int InactivityExit;
 	int InactivityExitTime;
 	int ShowHidden;
+
+	int ShowFilenameMarks;
+	int FilenameMarksAlign;
+	int FilenameMarksInStatusBar;
+	DWORD MinFilenameIndentation, MaxFilenameIndentation;
+	DWORD DirNameStyle;
+	DWORD DirNameStyleColumnWidthAlways;
+	DWORD ShowSymlinkSize;
+
 	int Highlight;
 	int CursorBlinkTime;
 
@@ -410,6 +419,7 @@ struct Options
 	int RightSelectedFirst;
 	int LeftSelectedFirst;
 	int SelectFolders;
+	int AttrStrStyle;
 	int PanelCaseSensitiveCompareSelect;
 	int ReverseSort;
 	int SortFolderExt;
@@ -475,6 +485,7 @@ struct Options
 	int LeftHeightDecrement;
 	int RightHeightDecrement;
 	int WidthDecrement;
+	int PanelsDisposition;
 
 	int ShowColumnTitles;
 	int ShowPanelStatus;
@@ -511,6 +522,7 @@ struct Options
 	FARString strLanguage;
 	int SmallIcon;
 	FARString strRegRoot;
+	int ClassicHotkeyLinkResolving;
 	int PanelRightClickRule;	// задает поведение правой клавиши мыши
 	int PanelCtrlAltShiftRule;	// задает поведение Ctrl-Alt-Shift для панелей.
 	// Panel/CtrlFRule в реестре - задает поведение Ctrl-F. Если = 0, то штампуется файл как есть, иначе - с учетом отображения на панели
@@ -627,6 +639,8 @@ struct Options
 	FARString strTimeSeparator;
 	FARString strDecimalSeparator;
 
+	DWORD OwnerGroupShowId;
+
 	bool IsFirstStart;
 
 	std::vector<std::wstring> CmdLineStrings;
@@ -653,3 +667,4 @@ void SetFolderInfoFiles();
 void InfoPanelSettings();
 void AutoCompleteSettings();
 void LanguageSettings();
+void DirectoryNameSettings();

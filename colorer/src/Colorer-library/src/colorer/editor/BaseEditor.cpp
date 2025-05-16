@@ -113,7 +113,7 @@ void BaseEditor::remapLRS(bool recreate)
 
 void BaseEditor::setFileType(FileType* ftype)
 {
-  logger->debug("[BaseEditor] setFileType: {0}", ftype->getName());
+  COLORER_LOG_DEBUG("[BaseEditor] setFileType: %", ftype->getName());
   currentFileType = ftype;
   parserFactory->getHrcLibrary().loadFileType(ftype);
   textParser->setFileType(currentFileType);
@@ -132,7 +132,7 @@ FileType* BaseEditor::chooseFileTypeCh(const UnicodeString* fileName, int choose
   UnicodeString textStart;
   int totalLength = 0;
   for (int i = 0; i < chooseStr; i++) {
-    UnicodeString* iLine = lineSource->getLine(i);
+    const UnicodeString* iLine = lineSource->getLine(i);
     if (iLine == nullptr) {
       break;
     }
@@ -164,10 +164,11 @@ FileType* BaseEditor::chooseFileType(const UnicodeString* fileName)
     currentFileType = parserFactory->getHrcLibrary().chooseFileType(fileName, nullptr);
   }
   else {
-    int chooseStr = CHOOSE_STR, chooseLen = CHOOSE_LEN;
+    int chooseStr = CHOOSE_STR;
+    int chooseLen = CHOOSE_LEN;
 
     UnicodeString ds_def = UnicodeString("default");
-    FileType* def = parserFactory->getHrcLibrary().getFileType(&ds_def);
+    const FileType* def = parserFactory->getHrcLibrary().getFileType(&ds_def);
     if (def) {
       chooseStr = def->getParamValueInt("firstlines", chooseStr);
       chooseLen = def->getParamValueInt("firstlinebytes", chooseLen);
@@ -218,8 +219,9 @@ void BaseEditor::removeEditorListener(EditorListener* el)
   }
 }
 
-PairMatch* BaseEditor::getPairMatch(int lineNo, int linePos)
+PairMatch* BaseEditor::getPairMatch(int lineNo, int linePos, LineRegion** lineRegion)
 {
+  *lineRegion = nullptr;
   LineRegion* lrStart = getLineRegions(lineNo);
   if (lrStart == nullptr) {
     return nullptr;
@@ -235,6 +237,7 @@ PairMatch* BaseEditor::getPairMatch(int lineNo, int linePos)
   if (pair != nullptr) {
     auto* pm = new PairMatch(pair, lineNo, pair->region->hasParent(def_PairStart));
     pm->setStart(pair);
+    *lineRegion = lrStart;
     return pm;
   }
   return nullptr;
@@ -250,17 +253,16 @@ void BaseEditor::releasePairMatch(PairMatch* pm)
   delete pm;
 }
 
-PairMatch* BaseEditor::searchPair(int lineNo, int pos, int start_line, int end_line){
-  int lno;
-  PairMatch* pm = getPairMatch(lineNo, pos);
+PairMatch* BaseEditor::searchPair(int lineNo, int pos, int start_line, int end_line)
+{
+  LineRegion* slr = nullptr;
+  PairMatch* pm = getPairMatch(lineNo, pos, &slr);
   if (pm == nullptr) {
     return nullptr;
   }
 
-  lno = pm->sline;
-
+  int lno = pm->sline;
   LineRegion* pair = pm->getStartRef();
-  LineRegion* slr = getLineRegions(lno);
   while (true) {
     if (pm->pairBalance > 0) {
       do {
@@ -271,6 +273,7 @@ PairMatch* BaseEditor::searchPair(int lineNo, int pos, int start_line, int end_l
             return pm;
           }
           pair = getLineRegions(lno);
+          slr = pair;
         }
       } while (!pair->region);
     }
@@ -329,7 +332,7 @@ LineRegion* BaseEditor::getLineRegions(int lno)
 
 void BaseEditor::modifyEvent(int topLine)
 {
-  logger->debug("[BaseEditor] modifyEvent: {0}", topLine);
+  COLORER_LOG_DEBUG("[BaseEditor] modifyEvent: %", topLine);
   if (invalidLine > topLine) {
     invalidLine = topLine;
     for (auto& editorListener : editorListeners) {
@@ -347,18 +350,18 @@ void BaseEditor::modifyLineEvent(int line)
 
 void BaseEditor::visibleTextEvent(int wStart_, int wSize_)
 {
-  logger->debug("[BaseEditor] visibleTextEvent: {0}-{1}", wStart_, wSize_);
+  COLORER_LOG_DEBUG("[BaseEditor] visibleTextEvent: %-%", wStart_, wSize_);
   wStart = wStart_;
   wSize = wSize_;
 }
 
 void BaseEditor::lineCountEvent(int newLineCount)
 {
-  logger->debug("[BaseEditor] lineCountEvent: {0}", newLineCount);
+  COLORER_LOG_DEBUG("[BaseEditor] lineCountEvent: %", newLineCount);
   lineCount = newLineCount;
 }
 
-inline int BaseEditor::getLastVisibleLine()
+inline int BaseEditor::getLastVisibleLine() const
 {
   int r1 = (wStart + wSize);
   int r2 = lineCount;
@@ -367,7 +370,8 @@ inline int BaseEditor::getLastVisibleLine()
 
 void BaseEditor::validate(int lno, bool rebuildRegions)
 {
-  int parseFrom, parseTo;
+  int parseFrom;
+  int parseTo;
   bool layoutChanged = false;
   TextParser::TextParseMode tpmode = TextParser::TextParseMode::TPM_CACHE_READ;
 
@@ -387,7 +391,7 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
     lrSupport->clear();
     // Regions were dropped
     layoutChanged = true;
-    logger->debug("[BaseEditor] lrSize != wSize*2");
+    COLORER_LOG_DEBUG("[BaseEditor] lrSize != wSize*2");
   }
 
   /* Fixes window position according to line number */
@@ -418,8 +422,7 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
     }
     firstLine = newFirstLine;
     layoutChanged = true;
-    logger->debug("[BaseEditor] newFirstLine={0}, parseFrom={1}, parseTo={2}", firstLine, parseFrom,
-                  parseTo);
+    COLORER_LOG_DEBUG("[BaseEditor] newFirstLine=%, parseFrom=%, parseTo=%", firstLine, parseFrom, parseTo);
   }
 
   if (!layoutChanged) {
@@ -442,14 +445,14 @@ void BaseEditor::validate(int lno, bool rebuildRegions)
 
   /* Runs parser */
   if (parseTo - parseFrom > 0) {
-    logger->debug("[BaseEditor] validate:parse:{0}-{1}, {2}", parseFrom, parseTo,
-                  tpmode == TextParser::TextParseMode::TPM_CACHE_READ ? "READ" : "UPDATE");
+    COLORER_LOG_DEBUG("[BaseEditor] validate:parse:%-%, %", parseFrom, parseTo,
+                      tpmode == TextParser::TextParseMode::TPM_CACHE_READ ? "READ" : "UPDATE");
     int stopLine = textParser->parse(parseFrom, parseTo - parseFrom, tpmode);
 
     if (tpmode == TextParser::TextParseMode::TPM_CACHE_UPDATE) {
       invalidLine = stopLine + 1;
     }
-    logger->debug("[BaseEditor] validate:parsed: invalidLine={0}", invalidLine);
+    COLORER_LOG_DEBUG("[BaseEditor] validate:parsed: invalidLine=%", invalidLine);
   }
 }
 
@@ -516,7 +519,7 @@ void BaseEditor::leaveScheme(size_t lno, UnicodeString* line, int sx, int ex, co
   }
 }
 
-bool BaseEditor::haveInvalidLine()
+bool BaseEditor::haveInvalidLine() const
 {
   return invalidLine < lineCount;
 }

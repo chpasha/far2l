@@ -56,7 +56,7 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	void ReaderThread();
 	void ReaderLoop();
 	void WriterThread();
-	void UpdateBackendIdentification();
+	void BackendInfoChanged();
 
 	std::condition_variable _async_cond;
 	std::mutex _async_mutex;
@@ -66,7 +66,9 @@ class TTYBackend : IConsoleOutputBackend, ITTYInputSpecialSequenceHandler, IFar2
 	COORD _largest_window_size{};
 	std::atomic<bool> _largest_window_size_ready{false};
 	std::atomic<bool> _flush_input_queue{false};
+	std::atomic<bool> _focused{true}; // assume starting focused
 
+	struct BI : std::mutex { std::string flavor; } _backend_info;
 
 	struct Far2lInteractData
 	{
@@ -139,10 +141,12 @@ protected:
 	virtual bool OnConsoleSetBasePalette(void *pbuff);
 	virtual void OnConsoleOverrideColor(DWORD Index, DWORD *ColorFG, DWORD *ColorBK);
 	virtual void OnConsoleSetCursorBlinkTime(DWORD interval);
+	const char *OnConsoleBackendInfo(int entity);
 
 	// ITTYInputSpecialSequenceHandler
 	virtual void OnUsingExtension(char extension);
 	virtual void OnInspectKeyEvent(KEY_EVENT_RECORD &event);
+	virtual void OnFocusChange(bool focused);
 	virtual void OnFar2lEvent(StackSerializer &stk_ser);
 	virtual void OnFar2lReply(StackSerializer &stk_ser);
 	virtual void OnInputBroken();

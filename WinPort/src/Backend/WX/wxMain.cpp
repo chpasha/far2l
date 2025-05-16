@@ -1,4 +1,6 @@
 #include "wxMain.h"
+#include <dlfcn.h>
+#include "../NotifySh.h"
 
 #define AREAS_REDUCTION
 
@@ -22,6 +24,10 @@
 // If time between adhoc text copy and mouse button release less then this value then text will not be copied. Used to protect against unwanted copy-paste-s
 #define QEDIT_COPY_MINIMAL_DELAY 150
 
+// This defines how much time UI remain frozen after user released qedit, that
+// allows user to quickly select another location before all shadowed output changes applied
+#define QEDIT_UNFREEZE_DELAY     1000
+
 #if (wxCHECK_VERSION(3, 0, 5) || (wxCHECK_VERSION(3, 0, 4) && WX304PATCH)) && !(wxCHECK_VERSION(3, 1, 0) && !wxCHECK_VERSION(3, 1, 3))
 	// wx version is greater than 3.0.5 (3.0.4 on Ubuntu 20) and not in 3.1.0-3.1.2
 	#define WX_ALT_NONLATIN
@@ -42,6 +48,9 @@ static DWORD g_TIMER_PERIOD = DEF_TIMER_PERIOD;
 static DWORD g_TIMER_IDLING_CYCLES = TIMER_IDLING_TIME / DEF_TIMER_PERIOD;
 
 bool WinPortClipboard_IsBusy();
+
+WINPORT_DECL_DEF(FreezeConsoleOutput,VOID,())
+WINPORT_DECL_DEF(UnfreezeConsoleOutput,VOID,())
 
 static void NormalizeArea(SMALL_RECT &area)
 {
@@ -572,6 +581,32 @@ wxEND_EVENT_TABLE()
 WinPortPanel::WinPortPanel(WinPortFrame *frame, const wxPoint& pos, const wxSize& size)
 	: _paint_context(this), _frame(frame), _refresh_rects_throttle(WINPORT(GetTickCount)())
 {
+	_backend_info.emplace_back(
+		StrPrintf("Build/wxWidgets %d.%d.%d", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER));
+
+#if wxCHECK_VERSION(2, 9, 2)
+	wxVersionInfo wxv = wxGetLibraryVersionInfo();
+	_backend_info.emplace_back(
+		StrPrintf("wxWidgets %d.%d.%d", wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro()));
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d actual: %d.%d.%d\n",
+		wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER, wxv.GetMajor(), wxv.GetMinor(), wxv.GetMicro());
+#else
+	fprintf(stderr, "FAR2L wxWidgets build: %d.%d.%d\n", wxMAJOR_VERSION, wxMINOR_VERSION, wxRELEASE_NUMBER);
+#endif
+
+#ifdef __WXGTK__
+	typedef unsigned int (*gtk_get_x_version_t)(void);
+	gtk_get_x_version_t pfn_gtk_get_major_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_major_version");
+	if (pfn_gtk_get_major_version) {
+		gtk_get_x_version_t pfn_gtk_get_minor_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_minor_version");
+		gtk_get_x_version_t pfn_gtk_get_micro_version = (gtk_get_x_version_t)dlsym(RTLD_DEFAULT, "gtk_get_micro_version");
+		_backend_info.emplace_back(
+			StrPrintf("GTK %d.%d.%d", pfn_gtk_get_major_version(),
+				pfn_gtk_get_minor_version ? pfn_gtk_get_minor_version() : -1,
+				pfn_gtk_get_micro_version ? pfn_gtk_get_micro_version() : -1));
+	}
+#endif
+
 	// far2l doesn't need special erase background
 	SetBackgroundStyle(wxBG_STYLE_PAINT);
 	Create(frame, wxID_ANY, pos, size, wxWANTS_CHARS | wxNO_BORDER);
@@ -747,6 +782,16 @@ void WinPortPanel::CheckForResizePending()
 	}
 }
 
+
+void WinPortPanel::CheckForUnfreeze(bool force)
+{
+	if (_qedit_unfreeze_start_ticks != 0
+			&& (force || WINPORT(GetTickCount)() - _qedit_unfreeze_start_ticks >= QEDIT_UNFREEZE_DELAY)) {
+		WINPORT(UnfreezeConsoleOutput)();
+		_qedit_unfreeze_start_ticks = 0;
+	}
+}
+
 void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 {
 	if (_extra_refresh) {
@@ -761,6 +806,8 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 		return;
 	}
 
+	CheckForUnfreeze(false);
+
 	CheckForResizePending();
 	CheckPutText2CLip();	
 	if (_mouse_qedit_start_ticks != 0 && WINPORT(GetTickCount)() - _mouse_qedit_start_ticks > QEDIT_COPY_MINIMAL_DELAY) {
@@ -769,7 +816,10 @@ void WinPortPanel::OnTimerPeriodic(wxTimerEvent& event)
 	_paint_context.BlinkCursor();
 	++_timer_idling_counter;
 	// stop timer if counter reached limit and cursor is visible and no other timer-dependent things remained
-	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES && _paint_context.CursorBlinkState() && _text2clip.empty()) {
+	if (_timer_idling_counter >= g_TIMER_IDLING_CYCLES
+			&& _paint_context.CursorBlinkState()
+			&& _qedit_unfreeze_start_ticks == 0
+			&& _text2clip.empty()) {
 		_periodic_timer->Stop();
 	}
 }
@@ -827,11 +877,11 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 		if (_refresh_rects.empty()) {
 			action = A_QUEUE;
 #ifndef __APPLE__
-		} else if (_refresh_rects_throttle != (DWORD)-1 &&
+		} else if (_refresh_rects_throttle != 0 &&
 				WINPORT(GetTickCount)() - _refresh_rects_throttle > 500 &&
 				!wxIsMainThread()) {
 			action = A_THROTTLE;
-			_refresh_rects_throttle = (DWORD)-1;
+			_refresh_rects_throttle = 0;
 #else
 //TODO: fix stuck
 #endif
@@ -915,8 +965,6 @@ void WinPortPanel::OnConsoleOutputUpdated(const SMALL_RECT *areas, size_t count)
 			CallInMain<int>(fn);
 			std::lock_guard<std::mutex> lock(_refresh_rects);
 			_refresh_rects_throttle = WINPORT(GetTickCount)();
-			if (_refresh_rects_throttle == (DWORD)-1)
-				_refresh_rects_throttle = 0;
 		} break;
 		
 		case A_NOTHING: break;
@@ -1109,14 +1157,198 @@ static bool IsForcedCharTranslation(int code)
 		|| code==WXK_NUMPAD_MULTIPLY || code==WXK_NUMPAD_SUBTRACT || code==WXK_NUMPAD_DIVIDE);
 }
 
+// helper function that returns textual description of wx virtual keycode
+const char* GetWxVirtualKeyCodeName(int keycode)
+{
+	switch ( keycode )
+	{
+#define WXK_(x) \
+		case WXK_##x: return #x;
+
+		WXK_(BACK)
+		WXK_(TAB)
+		WXK_(RETURN)
+		WXK_(ESCAPE)
+		WXK_(SPACE)
+		WXK_(DELETE)
+		WXK_(START)
+		WXK_(LBUTTON)
+		WXK_(RBUTTON)
+		WXK_(CANCEL)
+		WXK_(MBUTTON)
+//		WXK_(NUMPAD_CENTER)
+		WXK_(SHIFT)
+		WXK_(ALT)
+		WXK_(CONTROL)
+		WXK_(MENU)
+		WXK_(PAUSE)
+		WXK_(CAPITAL)
+		WXK_(END)
+		WXK_(HOME)
+		WXK_(LEFT)
+		WXK_(UP)
+		WXK_(RIGHT)
+		WXK_(DOWN)
+		WXK_(SELECT)
+		WXK_(PRINT)
+		WXK_(EXECUTE)
+		WXK_(SNAPSHOT)
+		WXK_(INSERT)
+		WXK_(HELP)
+		WXK_(NUMPAD0)
+		WXK_(NUMPAD1)
+		WXK_(NUMPAD2)
+		WXK_(NUMPAD3)
+		WXK_(NUMPAD4)
+		WXK_(NUMPAD5)
+		WXK_(NUMPAD6)
+		WXK_(NUMPAD7)
+		WXK_(NUMPAD8)
+		WXK_(NUMPAD9)
+		WXK_(MULTIPLY)
+		WXK_(ADD)
+		WXK_(SEPARATOR)
+		WXK_(SUBTRACT)
+		WXK_(DECIMAL)
+		WXK_(DIVIDE)
+		WXK_(F1)
+		WXK_(F2)
+		WXK_(F3)
+		WXK_(F4)
+		WXK_(F5)
+		WXK_(F6)
+		WXK_(F7)
+		WXK_(F8)
+		WXK_(F9)
+		WXK_(F10)
+		WXK_(F11)
+		WXK_(F12)
+		WXK_(F13)
+		WXK_(F14)
+		WXK_(F15)
+		WXK_(F16)
+		WXK_(F17)
+		WXK_(F18)
+		WXK_(F19)
+		WXK_(F20)
+		WXK_(F21)
+		WXK_(F22)
+		WXK_(F23)
+		WXK_(F24)
+		WXK_(NUMLOCK)
+		WXK_(SCROLL)
+		WXK_(PAGEUP)
+		WXK_(PAGEDOWN)
+		WXK_(NUMPAD_SPACE)
+		WXK_(NUMPAD_TAB)
+		WXK_(NUMPAD_ENTER)
+		WXK_(NUMPAD_F1)
+		WXK_(NUMPAD_F2)
+		WXK_(NUMPAD_F3)
+		WXK_(NUMPAD_F4)
+		WXK_(NUMPAD_HOME)
+		WXK_(NUMPAD_LEFT)
+		WXK_(NUMPAD_UP)
+		WXK_(NUMPAD_RIGHT)
+		WXK_(NUMPAD_DOWN)
+		WXK_(NUMPAD_PAGEUP)
+		WXK_(NUMPAD_PAGEDOWN)
+		WXK_(NUMPAD_END)
+		WXK_(NUMPAD_INSERT)
+		WXK_(NUMPAD_DELETE)
+		WXK_(NUMPAD_EQUAL)
+		WXK_(NUMPAD_MULTIPLY)
+		WXK_(NUMPAD_ADD)
+		WXK_(NUMPAD_SEPARATOR)
+		WXK_(NUMPAD_SUBTRACT)
+		WXK_(NUMPAD_DECIMAL)
+		WXK_(NUMPAD_DIVIDE)
+
+		WXK_(WINDOWS_LEFT)
+		WXK_(WINDOWS_RIGHT)
+#ifdef __WXOSX__
+		WXK_(RAW_CONTROL)
+#endif
+#undef WXK_
+
+	default:
+
+		static char buffer[20] = {0};
+		snprintf(buffer, sizeof(buffer),
+			((keycode >= 20) && (keycode <= 0x7f)) ? "\"%c\"" : "%d", keycode);
+		return buffer;
+	}
+}
+
+char* FormatWxKeyState(uint16_t state) {
+
+	static char buffer[5];
+
+	buffer[0]  = state & wxMOD_ALT          ? 'A' : 'a';
+	buffer[1]  = state & wxMOD_CONTROL      ? 'C' : 'c';
+	buffer[2]  = state & wxMOD_SHIFT        ? 'S' : 's';
+	buffer[3]  = state & wxMOD_META         ? 'M' : 'm';
+
+	buffer[4] = '\0';
+
+	return buffer;
+}
+
+static bool isNumpadNumericKey(int keycode)
+{
+	switch (keycode) {
+		case WXK_NUMPAD0:
+		case WXK_NUMPAD1:
+		case WXK_NUMPAD2:
+		case WXK_NUMPAD3:
+		case WXK_NUMPAD4:
+		case WXK_NUMPAD5:
+		case WXK_NUMPAD6:
+		case WXK_NUMPAD7:
+		case WXK_NUMPAD8:
+		case WXK_NUMPAD9:
+		case WXK_NUMPAD_INSERT:
+		case WXK_NUMPAD_END:
+		case WXK_NUMPAD_DOWN:
+		case WXK_NUMPAD_PAGEDOWN:
+		case WXK_NUMPAD_LEFT:
+		case WXK_NUMPAD_BEGIN: // NumPad center (5)
+		case WXK_NUMPAD_RIGHT:
+		case WXK_NUMPAD_HOME:
+		case WXK_NUMPAD_UP:
+		case WXK_NUMPAD_PAGEUP:
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool isLayoutDependentKey( wxKeyEvent& event ) {
+	switch (event.GetKeyCode()) {
+		// Those keys generate Unicode key codes, but they are not keyboard layout-dependent keys
+		case WXK_ESCAPE:
+		case WXK_DELETE:
+		case WXK_BACK:
+		case WXK_TAB:
+		case WXK_RETURN:
+		case WXK_SPACE:
+			return false;
+		default:
+			return event.GetUnicodeKey() > 0;
+	}
+}
+
 void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 {
 	ResetTimerIdling();
+	CheckForUnfreeze(true);
 	DWORD now = WINPORT(GetTickCount)();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "OnKeyDown: raw=%x code=%x uni=%x (%lc) ts=%lu [now=%u]",
+	fprintf(stderr, "\nOnKeyDown: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu [now=%u]",
+		FormatWxKeyState(event.GetModifiers()),
+		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), now);
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp(), now);
 
 	_exclusive_hotkeys.OnKeyDown(event, _frame);
 
@@ -1169,8 +1401,15 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	// also it didnt cause problems yet
 	if ( (_key_tracker.Shift() && !event.ShiftDown())
 		|| ((_key_tracker.LeftControl() || _key_tracker.RightControl()) && !event.ControlDown())) {
-		if (_key_tracker.CheckForSuddenModifiersUp()) {
-			_exclusive_hotkeys.Reset();
+
+		if (
+#ifndef __WXOSX__
+			(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+			|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
+
+				_key_tracker.CheckForSuddenModifiersUp()) {
+					_exclusive_hotkeys.Reset();
 		}
 	}
 
@@ -1201,10 +1440,22 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	// Do not enqueue empty events
+	// This is needed to fix https://github.com/elfmz/far2l/issues/2744
+	bool empty_event = !event.GetKeyCode() && !uni;
+
+	// We can not trust OnKeyDown Unicode character value for Alt+letter due to wx issue #23421,
+	// so let's fall back to OnChar value for such key combinations.
+
 	if ( (dwMods != 0 && event.GetUnicodeKey() < 32)
-		|| (dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED)) != 0
+		|| ((dwMods & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED | LEFT_ALT_PRESSED))
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3) // workaround is still needed at least in wx 3.2.6, see wx issue #24772
+
+			&& (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) // workaround for wx issue #23421
+#endif
+			)
 		|| event.GetKeyCode() == WXK_DELETE || event.GetKeyCode() == WXK_RETURN
-		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) ))
+		|| (event.GetUnicodeKey()==WXK_NONE && !IsForcedCharTranslation(event.GetKeyCode()) && !empty_event))
 	{
 		wxConsoleInputShim::Enqueue(&ir, 1);
 		_last_keydown_enqueued = true;
@@ -1226,6 +1477,8 @@ void WinPortPanel::OnKeyDown( wxKeyEvent& event )
 	}
 #endif
 
+	_enqueued_in_onchar = false;
+
 	event.Skip();
 }
 
@@ -1233,11 +1486,19 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 {
 	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "OnKeyUp: raw=%x code=%x uni=%x (%lc) ts=%lu",
+	fprintf(stderr, "\nOnKeyUp: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu",
+		FormatWxKeyState(event.GetModifiers()),
+		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp());
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp());
 
 	_exclusive_hotkeys.OnKeyUp(event);
+
+	if (_enqueued_in_onchar) {
+		_enqueued_in_onchar = false;
+		fprintf(stderr, " IN_ONCHAR\n");
+		return;
+	}
 
 	if (event.GetSkipped()) {
 		fprintf(stderr, " SKIPPED\n");
@@ -1299,10 +1560,23 @@ void WinPortPanel::OnKeyUp( wxKeyEvent& event )
 			ir.Event.KeyEvent.bKeyDown = TRUE;
 		}
 #endif
-		wxConsoleInputShim::Enqueue(&ir, 1);
+
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
+		if (/*g_wayland ||*/ !event.AltDown() || !isLayoutDependentKey(event)) { // workaround for wx issue #23421
+#else
+		{
+#endif
+			wxConsoleInputShim::Enqueue(&ir, 1);
+		}
+
 	}
-	if (_key_tracker.CheckForSuddenModifiersUp()) {
-		_exclusive_hotkeys.Reset();
+	if (
+#ifndef __WXOSX__
+		(!_key_tracker.Alt() || _key_tracker.Shift() || _key_tracker.LeftControl() || _key_tracker.RightControl()
+		|| !isNumpadNumericKey(event.GetKeyCode()) || g_wayland) && // workaround for #2294, 2464
+#endif
+		_key_tracker.CheckForSuddenModifiersUp()) {
+			_exclusive_hotkeys.Reset();
 	}
 	//event.Skip();
 }
@@ -1311,9 +1585,14 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 {
 	ResetTimerIdling();
 	const auto uni = event.GetUnicodeKey();
-	fprintf(stderr, "OnChar: raw=%x code=%x uni=%x (%lc) ts=%lu lke=%u",
+	if (_key_tracker.LastKeydown().GetTimestamp() != event.GetTimestamp()) {
+		fprintf(stderr, "\n");
+	}
+	fprintf(stderr, "\nOnChar: %s %s raw=%x code=%x uni=%x \"%lc\" ts=%lu lke=%u",
+		FormatWxKeyState(event.GetModifiers()),
+		GetWxVirtualKeyCodeName(event.GetKeyCode()),
 		event.GetRawKeyCode(), event.GetKeyCode(),
-		uni, (uni > 0x1f) ? uni : L' ', event.GetTimestamp(), _last_keydown_enqueued);
+		uni, (uni > 0x1f) ? uni : L'?', event.GetTimestamp(), _last_keydown_enqueued);
 	_exclusive_hotkeys.OnKeyUp(event);
 
 	if (event.GetSkipped()) {
@@ -1332,7 +1611,9 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 		INPUT_RECORD ir = {0};
 		ir.EventType = KEY_EVENT;
 		ir.Event.KeyEvent.wRepeatCount = 1;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_OEM_PERIOD;
+		// we can not determine correct VirtualKeyCode value here because of
+		// https://github.com/wxWidgets/wxWidgets/issues/25379
+		ir.Event.KeyEvent.wVirtualKeyCode = VK_NONAME;
 		if (event.GetUnicodeKey() <= 0x7f) { 
 			if (_key_tracker.LastKeydown().GetTimestamp() == event.GetTimestamp()) {
 				wx2INPUT_RECORD irx(TRUE, _key_tracker.LastKeydown(), _key_tracker);
@@ -1341,14 +1622,58 @@ void WinPortPanel::OnChar( wxKeyEvent& event )
 				ir.Event.KeyEvent.dwControlKeyState = irx.Event.KeyEvent.dwControlKeyState;
 			}
 		}
+
+#ifdef __WXOSX__
+		int lkc = _key_tracker.LastKeydown().GetKeyCode();
+		if ((uni >= 48) && (uni <= 57) && (lkc < WXK_NUMPAD0 || lkc > WXK_NUMPAD9)
+			&& (lkc < WXK_NUMPAD_SPACE || lkc > WXK_NUMPAD_DIVIDE))
+		{
+			// on Macs OnKeyDown sometimes produce wrong key code then pressing numbers in some keyboard layouts:
+			/*
+				OnKeyDown: raw=16 code=a7 uni=a7 (§) ts=1293737678 [now=1293737684]
+				OnChar: raw=16 code=36 uni=36 (6) ts=1293737678 lke=0
+				ConsoleInput::Enqueue: 6 36 a7 10 DOWN
+				ConsoleInput::Enqueue: 6 36 a7 10 UP
+			*/
+			// (its number 6 in French AZERTY layout on Mac)
+			// Windows virtual key code a7 is VK_BROWSER_FORWARD, defenitely wrong
+			// lets use unicode char to detect proper codes for such keys
+
+			ir.Event.KeyEvent.wVirtualKeyCode = uni;
+		}
+#endif
+
 		ir.Event.KeyEvent.uChar.UnicodeChar = event.GetUnicodeKey();
+
+#if !defined(__WXOSX__) && wxCHECK_VERSION(3, 2, 3)
+		if (event.AltDown() && isLayoutDependentKey(event)) {
+
+			// workaround for wx issue #23421
+
+			// OnChar KeyCode value is empty for non-latin letters in older wx so let's use value from previous KeyDown
+			// See wx issue #23379 for details
+			wx2INPUT_RECORD ir_tmp(TRUE, _key_tracker.LastKeydown(), _key_tracker);
+			ir.Event.KeyEvent.wVirtualKeyCode = ir_tmp.Event.KeyEvent.wVirtualKeyCode;
+			ir.Event.KeyEvent.wVirtualScanCode = ir_tmp.Event.KeyEvent.wVirtualScanCode;
+			ir.Event.KeyEvent.dwControlKeyState = ir_tmp.Event.KeyEvent.dwControlKeyState;
+			ir.Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
+			WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
+		}
+#endif
 
 		ir.Event.KeyEvent.bKeyDown = TRUE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
 		
 		ir.Event.KeyEvent.bKeyDown = FALSE;
 		wxConsoleInputShim::Enqueue(&ir, 1);
-		
+
+		_enqueued_in_onchar = true;
+
+#if !defined(__WXOSX__)
+		// avoid double up event in ResetInputState()
+		wxKeyEvent keyEventCopy = _key_tracker.LastKeydown();
+		_key_tracker.OnKeyUp(keyEventCopy);
+#endif
 	}
 	//event.Skip();
 }
@@ -1516,8 +1841,13 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 		_mouse_qedit_start_ticks = WINPORT(GetTickCount)();
 		if (!_mouse_qedit_start_ticks) _mouse_qedit_start_ticks = 1;
 		_mouse_qedit_moved = false;
+		if (_qedit_unfreeze_start_ticks == 0) {
+			WINPORT(FreezeConsoleOutput)();
+		} else {
+			_qedit_unfreeze_start_ticks = 0;
+		}
 		DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
-		
+
 	} else if (_mouse_qedit_start_ticks != 0) {
 		if (event.Moving() || event.Dragging()) {
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
@@ -1561,6 +1891,7 @@ void WinPortPanel::OnMouseQEdit( wxMouseEvent &event, COORD pos_char )
 			_mouse_qedit_start_ticks = 0;
 			DamageAreaBetween(_mouse_qedit_start, _mouse_qedit_last);
 			DamageAreaBetween(_mouse_qedit_start, pos_char);
+			_qedit_unfreeze_start_ticks = WINPORT(GetTickCount)();
 		}
 	}
 }
@@ -1626,9 +1957,11 @@ DWORD64 WinPortPanel::OnConsoleSetTweaks(DWORD64 tweaks)
 	if (_exclusive_hotkeys.Available())
 		out|= TWEAK_STATUS_SUPPORT_EXCLUSIVE_KEYS;
 
-	EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
-	if (event)
-		wxQueueEvent(this, event);
+	if (tweaks != TWEAKS_ONLY_QUERY_SUPPORTED) {
+		EventWithDWORD64 *event = new(std::nothrow) EventWithDWORD64(tweaks, WX_CONSOLE_SET_TWEAKS);
+		if (event)
+			wxQueueEvent(this, event);
+	}
 
 	return out;
 }
@@ -1639,59 +1972,16 @@ bool WinPortPanel::OnConsoleIsActive()
 	return _focused_ts != 0;
 }
 
-static std::string GetNotifySH()
-{
-	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
-	wxString fn_str = fn.GetPath(wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
-	std::string out(fn_str.mb_str());
-
-	if (TranslateInstallPath_Bin2Share(out)) {
-		out+= APP_BASENAME "/";
-	}
-
-	out+= "notify.sh";
-
-	struct stat s;
-	if (stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	if (TranslateInstallPath_Share2Lib(out) && stat(out.c_str(), &s) == 0) {
-		return out;
-	}
-
-	return std::string();
-}
-
 void WinPortPanel::OnConsoleDisplayNotification(const wchar_t *title, const wchar_t *text)
 {
 	const std::string &str_title = Wide2MB(title);
 	const std::string &str_text = Wide2MB(text);
-
 #ifdef __APPLE__
 	auto fn = std::bind(MacDisplayNotify, str_title.c_str(), str_text.c_str());
 	CallInMain<bool>(fn);
-
 #else
-
-	static std::string s_notify_sh = GetNotifySH();
-	if (s_notify_sh.empty()) {
-		fprintf(stderr, "OnConsoleDisplayNotification: notify.sh not found\n");
-		return;
-	}
-
-	pid_t pid = fork();
-	if (pid == 0) {
-		if (fork() == 0) {
-			execl(s_notify_sh.c_str(), s_notify_sh.c_str(), str_title.c_str(), str_text.c_str(), NULL);
-			perror("DisplayNotification - execl");
-		}
-		_exit(0);
-		exit(0);
-
-	} else if (pid != -1) {
-		waitpid(pid, 0, 0);
-	}
+	wxString fn_str = wxStandardPaths::Get().GetExecutablePath();
+	Far2l_NotifySh(fn_str.mb_str(), str_title.c_str(), str_text.c_str());
 #endif
 }
 
@@ -1761,6 +2051,24 @@ void WinPortPanel::OnConsoleSetCursorBlinkTime(DWORD interval)
 		wxQueueEvent(this, event);
 }
 
+const char *WinPortPanel::OnConsoleBackendInfo(int entity)
+{
+	if (entity == -1) {
+		return "GUI";
+	}
+
+	if (entity < 0) {
+		return nullptr;
+	}
+
+	if (size_t(entity) >= _backend_info.size()) {
+		return nullptr;
+	}
+
+	return _backend_info[size_t(entity)].c_str();
+}
+
+
 void WinPortPanel::CheckPutText2CLip()
 {
 	if (!_text2clip.empty()) {
@@ -1778,15 +2086,28 @@ void WinPortPanel::CheckPutText2CLip()
 void WinPortPanel::OnSetFocus( wxFocusEvent &event )
 {
 	//fprintf(stderr, "OnSetFocus\n");
+	const bool was_focused = (_focused_ts != 0);
 	const DWORD ts = WINPORT(GetTickCount)();
 	_focused_ts = ts ? ts : 1;
 	ResetTimerIdling();
+	if (!was_focused) {
+		INPUT_RECORD ir = {};
+		ir.EventType = FOCUS_EVENT;
+		ir.Event.FocusEvent.bSetFocus = TRUE;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
 }
 
 void WinPortPanel::OnKillFocus( wxFocusEvent &event )
 {
 	fprintf(stderr, "OnKillFocus\n");
-	_focused_ts = 0;
+	if (_focused_ts) {
+		_focused_ts = 0;
+		INPUT_RECORD ir = {};
+		ir.EventType = FOCUS_EVENT;
+		ir.Event.FocusEvent.bSetFocus = FALSE;
+		g_winport_con_in->Enqueue(&ir, 1);
+	}
 	ResetInputState();
 }
 
@@ -1804,6 +2125,24 @@ void WinPortPanel::ResetInputState()
 
 static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *ColorBK)
 {
+	if (Index == (DWORD)-1) {
+		const DWORD64 orig_attrs = g_winport_con_out->GetAttributes();
+		DWORD64 new_attrs = orig_attrs;
+		if ((*ColorFG & 0xff000000) == 0) {
+			SET_RGB_FORE(new_attrs, *ColorFG);
+		}
+		if ((*ColorBK & 0xff000000) == 0) {
+			SET_RGB_BACK(new_attrs, *ColorBK);
+		}
+		if (new_attrs != orig_attrs) {
+			g_winport_con_out->SetAttributes(new_attrs);
+		}
+
+		*ColorFG = WxConsoleForeground2RGB(orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		*ColorBK = WxConsoleBackground2RGB(orig_attrs & ~(DWORD64)COMMON_LVB_REVERSE_VIDEO).AsRGB();
+		return;
+	}
+
 	WinPortRGB fg(*ColorFG), bk(*ColorBK);
 	if (*ColorFG == (DWORD)-1) {
 		fg = g_winport_palette.foreground[Index];
@@ -1811,10 +2150,16 @@ static void ConsoleOverrideColorInMain(DWORD Index, DWORD *ColorFG, DWORD *Color
 	if (*ColorBK == (DWORD)-1) {
 		bk = g_winport_palette.background[Index];
 	}
-	*ColorFG = g_wx_palette.foreground[Index].AsRGB();
-	*ColorBK = g_wx_palette.background[Index].AsRGB();
-	g_wx_palette.foreground[Index] = fg;
-	g_wx_palette.background[Index] = bk;
+	const auto prev_fg = g_wx_palette.foreground[Index].AsRGB();
+	const auto prev_bk = g_wx_palette.background[Index].AsRGB();
+	if (*ColorFG != (DWORD)-2) {
+		g_wx_palette.foreground[Index] = fg;
+	}
+	if (*ColorBK != (DWORD)-2) {
+		g_wx_palette.background[Index] = bk;
+	}
+	*ColorFG = prev_fg;
+	*ColorBK = prev_bk;
 }
 
 static void ConsoleOverrideBasePaletteInMain(void *pbuff)

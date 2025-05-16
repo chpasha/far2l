@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "savescr.hpp"
 #include "ctrlobj.hpp"
 #include "scrbuf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "message.hpp"
 #include "config.hpp"
 #include "interf.hpp"
@@ -55,10 +55,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <atomic>
 #include <mutex>
 #include <unordered_set>
+#include "color.hpp"
+#include "MaskGroups.hpp"
 
 struct HighlightStrings
 {
-	const char *Flags, *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
+	const char *Name, *Flags, *CFlags, *Indent, *UseAttr, *IncludeAttributes, *ExcludeAttributes, *AttrSet, *AttrClear, *IgnoreMask, *UseMask,
 			*Mask, *NormalColor, *SelectedColor, *CursorColor, *SelectedCursorColor, *MarkCharNormalColor, *MarkCharSelectedColor,
 			*MarkCharCursorColor, *MarkCharSelectedCursorColor, *MarkChar, *ContinueProcessing, *UseDate, *DateType, *DateAfter,
 			*DateBefore, *DateRelative, *UseSize, *SizeAbove, *SizeBelow, *HighlightEdit, *HighlightList, *MarkStr, *NormalColorMask,
@@ -66,7 +68,7 @@ struct HighlightStrings
 			*MarkCharCursorColorMask, *MarkCharSelectedCursorColorMask, *MaskIgnoreCase;
 };
 
-static const HighlightStrings HLS = {"Flags", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
+static const HighlightStrings HLS = {"Name","Flags", "CFlags", "Indent", "UseAttr", "IncludeAttributes", "ExcludeAttributes", "AttrSet", "AttrClear",
 		"IgnoreMask", "UseMask", "Mask", "NormalColor", "SelectedColor", "CursorColor", "SelectedCursorColor", "MarkCharNormalColor",
 		"MarkCharSelectedColor", "MarkCharCursorColor","MarkCharSelectedCursorColor", "MarkChar", "ContinueProcessing", "UseDate",
 		"DateType", "DateAfter", "DateBefore", "DateRelative", "UseSize", "SizeAboveS", "SizeBelowS", "HighlightEdit", "HighlightList",
@@ -86,34 +88,10 @@ static void SetDefaultHighlighting()
 	fprintf(stderr, "SetDefaultHighlighting\n");
 
 	ConfigWriter cfg_writer;
-	static const wchar_t *MasksArchives = /* 1 */
-			L"*.rar,*.zip,*.[zj],*.[7bglx]z,*.[bg]zip,*.tar,*.t[agbx]z,*.ar[cj],*.r[0-9][0-9],*.a[0-9][0-9],*."
-			L"bz2,*.cab,*.msi,*.jar,*.lha,*.lzh,*.ha,*.ac[bei],*.pa[ck],*.rk,*.cpio,*.rpm,*.tbz2,*.zoo,*.zst,*.hqx,*.sit,*"
-			L".ice,*.uc2,*.ain,*.imp,*.777,*.ufa,*.boa,*.bs[2a],*.sea,*.hpk,*.ddi,*.x2,*.rkv,*.[lw]sz,*.h[ay]"
-			L"p,*.lim,*.sqz,*.chz";
-	static const wchar_t *MasksTemporary = /* 2 */ L"*.bak,*.tmp";
-										/*
-											$ 25.09.2001  IS
-											Эта маска для каталогов: обрабатывать все каталоги, кроме тех, что
-											являются родительскими (их имена - две точки).
-										*/
-	static const wchar_t *MasksScripts = L"*.sh,*.py,*.pl,*.cmd,*.exe,*.bat,*.com,*.run,*.elf";
-	static const wchar_t *MasksSoundFiles = 
-			L"*.aif,*.cda,*.mid,*.midi,*.mp3,*.mpa,*.ogg,*.wma,*.flac,*.wav,*.ape,*.wv,*.voc,*.669,*.digi,*.amf,*.ams,*.dbm,*.dmf,*.dsm,*.gdm,*.imf,"
-			L"*.it,*.itg,*.itp,*.j2b,*.mdl,*.med,*.mo3,*.mod,*.mt2,*.mtm,*.okt,*.plm,*.psm,*.ptm,*.s3m,*.sfx,*.stm,*.stp,*.uax,*.ult,*.xm";
-	static const wchar_t *MaskSharedObjects = L"*.dll,*.so,*.dll.*,*.so.*,*.obj,*.o,*.a,*.lib,*.sys,*.pyo,*.vim";
-	static const wchar_t *MaskVideoFiles = L"*.mkv,*.webm,*.mpg,*.mp2,*.mpeg,*.mpe,*.mpv,*.mp4,*.m4p,*.m4v,*.avi,*.wmv,*.mov,*.qt,*.flv,*.swf,*.avchd,*.3gp,*.vob";
-	static const wchar_t *MaskImageFiles = L"*.avif,*.jpg,*.jpeg,*.jpeg2000,*.ico,*.gif,*.png,*.webp,*.tga,*.bmp,*.pcx,*.tiff,*.tif,*.psd,*.eps,*.indd,*.svg,*.ai,*.cpt,*.kra,*.pdn,*.psp,*.xcf,*.sai,*.cgm,*.mpo,*.pns,*.jps";
-	static const wchar_t *MaskSourceFiles = L"*.c,*.cpp,*.c++,*.h,*.hpp,*.h++,*.asm,*.inc,*.src,*.css,*.glsl,*.lua,*.java,*.php,*.go,*.perl,*.r,*.bas,*.pas,*.jsm,*.qml,"
-											L"*.js,*.kt,*.sample,*.vs,*.fs,*.fx,*.hlsl,*.fsh,*.vsh,*.pixel,*.vertex,*.fragmentshader,*.fragment,*.vertexshader,"
-											L"*.ml,*.frag,*.geom,*.vert,*.rs,*.ts,*.jam,*.tcl, *.swift";
-	static const wchar_t *MaskModelFiles =  L"*.ma,*.mb,*.opengex,*.ply,*.pov-ray,*.prc,*.step,*.skp,*.stl,*.u3d,*.vrml,*.xaml,*.xgl,*.xvl,*.xvrml,*.x3d,*.3d,*.3df,*.3dm,*.3ds,*.3dxml,*.x3d,"
-											L"*.dds,*.sdkmesh,*.x,*.hdr,*.ktx,*.amf,*.asymptote,*.blend,*.collada,*.dgn,*.dwf,*.dwg,*.dxf,*.drawings,*.flt,*.fvrml,*.gltf,*.hsf,*.iges,*.imml,*.ipa,*.jt";
-	static const wchar_t *MaskTextFiles =  	L"*.docx,*.odt,*.pdf,*.rtf,*.tex,*.wpd,*.htm,*.html,*.key,*.odp,*.pps,*.ppt,*.pptx,*.ods,*.xls,*.xlsm,*.xlsx,*.srt,*.nfo,*.rst,*.man,"
-											L"read.me,readme*,*.txt,*.chm,*.hlp,*.doc,*.md,NEWS";
 
 	static struct DefaultData
 	{
+		const wchar_t *Name;
 		const wchar_t *Mask;
 		int IgnoreMask;
 		DWORD IncludeAttr;
@@ -131,41 +109,50 @@ static void SetDefaultHighlighting()
 			//           Mask                NormalColor
 			//                        IncludeAttributes
 			//                     IgnoreMask       CursorColor
-	{L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, 0x00, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0x002190, 1, FFF_DISABLED},
-	{L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 1, FFF_DISABLED},
-	{L"*", 1, FILE_ATTRIBUTE_BROKEN, 0x00, 0x10 | F_LIGHTRED, 0xFFFFFFFD0F, 0x30 | F_LIGHTRED, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_HIDDEN, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1, FFF_DISABLED},
-	{L"*|..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x00, 0xFFFFFFFD0F, 0x00, 0xFFFFFFFD0F, 0x000000, 0, 0},
-
-	{MasksSoundFiles,0, 0x00,0x00, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A, 0, FFF_DISABLED},
-	{MaskSharedObjects,0, 0x00,0x00, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MaskSourceFiles,0, 0x00,0x00, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MaskVideoFiles,0, 0x00,0x00, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MaskImageFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MaskModelFiles,0, 0x00,0x00, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MaskTextFiles,0, 0x00,0x00, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-
-	{MasksScripts,   0, 0x00,0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MasksArchives,  0, 0x00,0x00, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{MasksTemporary, 0, 0x00,0x00, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-
+	// === broken '!'
+	{L"Broken (stale symlinks)", L"*", 1, FILE_ATTRIBUTE_BROKEN, 0x00, 0x10 | F_LIGHTRED, 0xFFFFFFFD0F, 0x30 | F_LIGHTRED, 0xFFFFFFFD0F, 0xFF0021 /*!*/, 0, 0},
+	// === symlinks (to directory '~', to file '@')
+	{L"Symlinks to dirs",  L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF007E /*~*/, 0, 0},
+	{L"Symlinks to files", L"*", 1, FILE_ATTRIBUTE_REPARSE_POINT, FILE_ATTRIBUTE_DIRECTORY, 0x90 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0040 /*@*/, 0, 0},
+	// === devices (char '-', block '+', FIFO '|', socket '=')
+	{L"Character device", L"*", 1, FILE_ATTRIBUTE_DEVICE_CHAR, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF002D /*-*/, 0, 0},
+	{L"Block device",     L"*", 1, FILE_ATTRIBUTE_DEVICE_BLOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF002B /*+*/, 0, 0},
+	{L"FIFO (pipe)",      L"*", 1, FILE_ATTRIBUTE_DEVICE_FIFO, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF007C /*|*/, 0, 0},
+	{L"Socket",           L"*", 1, FILE_ATTRIBUTE_DEVICE_SOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF003D /*=*/, 0, 0},
+	// === regular directories & files
 	// это настройка для каталогов на тех панелях, которые должны раскрашиваться
 	// без учета масок (например, список хостов в "far navigator")
-	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0, 0x10 | F_GREEN, 0xFFFFFFFD0F, 0x30 | F_GREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_CHAR, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_BLOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_FIFO, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
-	{L"*", 1, FILE_ATTRIBUTE_DEVICE_SOCK, 0x00, 0x10 | F_LIGHTBLUE, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0, 0, 0},
-//	{L"*.*", 0, 0x00, 0x00, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF0000, 0}, // Чтобы не раскрашивало на NTFS все файлы в зеленый
-	{L"*", 1, FILE_ATTRIBUTE_EXECUTABLE, 0x00, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0}
+	{L"Special for skip highlight", L"*", 1, FILE_ATTRIBUTE_EXECUTABLE | FILE_ATTRIBUTE_REPARSE_POINT, 0, 0x10 | F_GREEN, 0xFFFFFFFD0F, 0x30 | F_GREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	// executable files '*'
+	{L"Executable files", L"*", 1, FILE_ATTRIBUTE_EXECUTABLE, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_GREEN, 0xFFFFFFFD0F, 0x30 | F_GREEN, 0xFFFFFFFD0F, 0xFF002A /***/, 1, 0},
+	// hidden files (without mark) & directories '/'
+	{L"Hidden files", L"*", 1, FILE_ATTRIBUTE_HIDDEN, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Hidden dirs",  L"*", 1, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF002F /*/*/, 0, 0},
+	// directories '/'
+	{L"Dirs",       L"*|..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x10 | F_WHITE, 0xFFFFFFFD0F, 0x30 | F_WHITE, 0xFFFFFFFD0F, 0xFF002F /*/*/, 0, 0},
+	{L"Parent dir", L"..", 0, FILE_ATTRIBUTE_DIRECTORY, 0x00, 0x00, 0xFFFFFFFD0F, 0x00, 0xFFFFFFFD0F, 0x00002F /*/*/, 0, 0},
+	// system '☼' & with more 1 hardlink '«'
+	{L"System",        L"*", 1, FILE_ATTRIBUTE_SYSTEM, 0x00, 0x10 | F_CYAN, 0xFFFFFFFD0F, 0x30 | F_DARKGRAY, 0xFFFFFFFD0F, 0xFF263C, 1, 0},
+	{L"Hardlinks > 1", L"*", 1, FILE_ATTRIBUTE_HARDLINKS, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTCYAN, 0xFFFFFFFD0F, 0x30 | F_BLUE, 0xFFFFFFFD0F, 0xFF00AB, 0, 0},
+	// without any mark, only different colors
+	{L"Shared",     L"<shared>", 0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00b800ull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Source",     L"<src>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xffbcacull << 16) | (0x10 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x8F0C00ull << 16) | (0x30 | F_GREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Image",      L"<pic>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Model",      L"<3d>",     0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x00ffaeull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x00432eull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Scripts",    L"<exec>",   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0x30 | F_LIGHTGREEN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Archives",   L"<arc>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0x30 | F_LIGHTMAGENTA, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Temporary",  L"<temp>",   0, 0x00, FILE_ATTRIBUTE_DIRECTORY, 0x10 | F_BROWN, 0xFFFFFFFD0F, 0x30 | F_BROWN, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	// sound '♪' (disabled by default)
+	{L"Sound",      L"<sound>",  0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xAAFF00ull << 16) | (0x10 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x005500ull << 16) | (0x30 | F_LIGHTGREEN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF266A/*♪*/, 0, FFF_DISABLED},
+	// without any mark, only different colors
+	{L"Video",      L"<video>",  0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0x30b8ffull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x006767ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
+	{L"Text files", L"<doc>",    0, 0x00, FILE_ATTRIBUTE_DIRECTORY, (0xccccccull << 16) | (0x10 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, (0x767676ull << 16) | (0x30 | F_BROWN) | FOREGROUND_TRUECOLOR, 0xFFFFFFFD0F, 0xFF0000, 0, 0},
 
 	};
 
 	for (size_t I = 0; I < ARRAYSIZE(StdHighlightData); I++) {
 		cfg_writer.SelectSectionFmt("%s/Group%d", RegColorsHighlight, (int)I);
+		cfg_writer.SetString(HLS.Name, StdHighlightData[I].Name);
 		cfg_writer.SetString(HLS.Mask, StdHighlightData[I].Mask);
 		cfg_writer.SetInt(HLS.IgnoreMask, StdHighlightData[I].IgnoreMask);
 		cfg_writer.SetUInt(HLS.IncludeAttributes, StdHighlightData[I].IncludeAttr);
@@ -194,6 +181,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 {
 	// Дефолтные значения выбраны так чтоб как можно правильней загрузить
 	// настройки старых версий фара.
+
 	if (bSortGroup)
 		HData->SetMask(cfg_reader.GetInt(HLS.UseMask, 1) != 0, Mask);
 	else
@@ -240,12 +228,17 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 	hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_UNDERCURSOR] = cfg_reader.GetULL(HLS.MarkCharCursorColorMask, 0);
 	hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR] = cfg_reader.GetULL(HLS.MarkCharSelectedCursorColorMask, 0);
 
+	hl.Flags = cfg_reader.GetUInt(HLS.CFlags, 0);
+	hl.Indent = cfg_reader.GetUInt(HLS.Indent, 0);
+	if (hl.Indent > HIGHLIGHT_MAX_MARK_LENGTH)
+		hl.Indent = HIGHLIGHT_MAX_MARK_LENGTH;
+
 	{ // Load Mark str
 		FARString strMark = cfg_reader.GetString(HLS.MarkStr, L"");
 		DWORD dwMarkLen = strMark.GetLength();
 		DWORD dwMarkChar = cfg_reader.GetUInt(HLS.MarkChar, 0);
 
-		hl.bMarkInherit = (dwMarkChar & 0xFF0000);
+		hl.Flags |= (dwMarkChar & 0xFF0000) >> 23;
 		dwMarkChar &= 0x0000FFFF;
 
 		if (dwMarkLen) {
@@ -253,7 +246,6 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 				dwMarkLen = HIGHLIGHT_MAX_MARK_LENGTH;
 
 			memcpy(&hl.Mark[0], strMark.GetBuffer(), sizeof(wchar_t) * dwMarkLen);
-			strMark.ReleaseBuffer();
 		}
 		else if (dwMarkChar) {
 			hl.Mark[0] = dwMarkChar;
@@ -263,7 +255,6 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 		hl.Mark[dwMarkLen] = 0; // terminate
 		hl.MarkLen = dwMarkLen;
 	}
-
 
 #if 1
 	  // FIXME: Temporary code for compatibility with old settings where there are no transparency masks for colors
@@ -302,6 +293,7 @@ static void LoadFilter(FileFilterParams *HData, ConfigReader &cfg_reader, const 
 void HighlightFiles::InitHighlightFiles()
 {
 	FARString strMask;
+	FARString strName;
 	std::string strGroupName, strRegKey;
 	const int GroupDelta[4] = {DEFAULT_SORT_GROUP, 0, DEFAULT_SORT_GROUP + 1, DEFAULT_SORT_GROUP};
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
@@ -338,6 +330,9 @@ void HighlightFiles::InitHighlightFiles()
 			FileFilterParams *HData = HiData.addItem();
 
 			if (HData) {
+				cfg_reader->GetString(strName, HLS.Name, L"");
+				HData->SetTitle(strName);
+
 				LoadFilter(HData, *cfg_reader, strMask,
 						GroupDelta[j] + (GroupDelta[j] == DEFAULT_SORT_GROUP ? 0 : i),
 						(GroupDelta[j] == DEFAULT_SORT_GROUP ? false : true));
@@ -364,16 +359,29 @@ static const DWORD FarColor[] = {COL_PANELTEXT, COL_PANELSELECTEDTEXT, COL_PANEL
 
 static const HighlightDataColor DefaultStartingColors =
 	{
-		{	{0x0, 0x0, 0x0, 0x0},		// Color[0][4] 0 = Black on black = default theme color
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
 			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
-		{	{0x0, 0x0, 0x0, 0x0},		// Mask[0][4] // Transparency Masks 0 = fully transparent
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
 			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
-		{ 0 }, 						// wchar_t	Mark
 		0,     						// size_t	MarkLen;
-		true   						// bool	bMarkInherit;
+		HL_FLAGS_MARK_INHERIT | HL_FLAGS_MARK_ADD, // flags;
+		0,							// indent
+		{ 0 }, 						// wchar_t	Mark
 	};
 
-const HighlightDataColor ZeroColors{{{0}}};
+const HighlightDataColor ZeroColors =
+	{
+		{	{0x0, 0x0, 0x0, 0x0},	// Color[0][4] 0 = Black on black = default theme color
+			{0x0, 0x0, 0x0, 0x0}},	// Color[1][4]
+		{	{0x0, 0x0, 0x0, 0x0},	// Mask[0][4] // Transparency Masks 0 = fully transparent
+			{0x0, 0x0, 0x0, 0x0}},	// Mask[1][4]
+		0,     						// size_t	MarkLen;
+		0,   						// flags;
+		0,							// indent
+		{ 0 }, 						// wchar_t	Mark
+	};
+
+//const HighlightDataColor ZeroColors{{{0}}};
 
 static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 {
@@ -384,7 +392,7 @@ static void ApplyBlackOnBlackColors(HighlightDataColor *hl)
 		// Для пометки возьмем цвета файла включая прозрачность.
 		if (!(hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] & 0xFF)) {
 
-			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
+			hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = FarColors::setcolors[FarColor[i]];
 		}
 
 		// Если у метки black on black, то возьмем ей цвета и маску от имени
@@ -400,13 +408,13 @@ static void ApplyStartColors(HighlightDataColor *hl)
 {
 	// Начинаем с цветов "по умолчанию" и далее их раскрашиваем
 	for (int i = 0; i < 4; i++) {
-		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = Palette[FarColor[i]];
+		hl->Color[HIGHLIGHTCOLORTYPE_FILE][i] = FarColors::setcolors[FarColor[i]];
 		hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i] |= 0xFFFFFFFFFFFFFFFF;
 		hl->Color[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Color[HIGHLIGHTCOLORTYPE_FILE][i];
 		hl->Mask[HIGHLIGHTCOLORTYPE_MARKSTR][i] = hl->Mask[HIGHLIGHTCOLORTYPE_FILE][i];
 	}
 
-	hl->bMarkInherit = false;
+	hl->Flags   = 0;
 	hl->MarkLen = 0;
 	hl->Mark[0] = 0;
 }
@@ -433,11 +441,11 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 	// Унаследуем пометку из Src в Dst если она есть
 	if (hlSrc->MarkLen) {
 		// Если нет наследования в Src, то просто заменим метку на новую в Dst
-		if (!hlSrc->bMarkInherit) {
+		if ( !(hlSrc->Flags & HL_FLAGS_MARK_INHERIT) || !hlDst->MarkLen ) {
 			hlDst->MarkLen = hlSrc->MarkLen;
 			memcpy(hlDst->Mark, hlSrc->Mark, sizeof(wchar_t) * hlSrc->MarkLen);
 		}
-		else { // Если есть наследование, добавим метку к старой
+		else if (hlSrc->Flags & HL_FLAGS_MARK_ADD) { // Если есть наследование, добавим метку к старой
 			uint32_t freespace = (HIGHLIGHT_MAX_MARK_LENGTH - hlDst->MarkLen);
 			if (freespace) { // Если есть хоть какое то место, добавим что влезет
 				uint32_t copylen = (freespace < hlSrc->MarkLen) ? freespace : hlSrc->MarkLen;
@@ -446,7 +454,7 @@ static void ApplyColors(HighlightDataColor *hlDst, HighlightDataColor *hlSrc)
 			}
 		}
 	}
-	else if (!hlSrc->bMarkInherit) { // Если нет наследования и метка пустая, то убираем метку совсем
+	else if (!(hlSrc->Flags & HL_FLAGS_MARK_INHERIT)) { // Если нет наследования и метка пустая, то убираем метку совсем
 		hlDst->MarkLen = 0;
 	}
 }
@@ -470,31 +478,31 @@ class HighlightFilesChunk : protected Threaded
 	uint64_t _CurrentTime;
 	const TPointerArray<FileFilterParams> &_HiData;
 	FileListItem **_FileItem;
-	int _FileCount;
+	size_t _FileCount, _MarkLM;
 	bool _UseAttrHighlighting;
 
 	virtual void *ThreadProc()
 	{
-		DoNow();
-		return nullptr;
+		return DoNow();
 	}
 
 public:
 	HighlightFilesChunk(uint64_t CurrentTime, const TPointerArray<FileFilterParams> &HiData,
-			FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+			FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting)
 		:
 		_CurrentTime(CurrentTime),
 		_HiData(HiData),
 		_FileItem(FileItem),
 		_FileCount(FileCount),
+		_MarkLM(0),
 		_UseAttrHighlighting(UseAttrHighlighting)
 	{}
 
 	virtual ~HighlightFilesChunk() { WaitThread(); }
 
-	void DoNow()
+	void *DoNow()
 	{
-		for (int FCnt = 0; FCnt < _FileCount; ++FCnt) {
+		for (size_t FCnt = 0; FCnt < _FileCount; ++FCnt) {
 			FileListItem &fli = *_FileItem[FCnt];
 			HighlightDataColor Colors = DefaultStartingColors;
 			ApplyStartColors(&Colors);
@@ -512,45 +520,68 @@ public:
 					CurHiData->GetColors(&TempColors);
 					ApplyColors(&Colors, &TempColors);
 
-					if (!CurHiData->GetContinueProcessing())	// || !HasTransparent(&fli->Colors))
+					if (!CurHiData->GetContinueProcessing())
 						break;
 				}
 			}
+
+			if (Colors.MarkLen) {
+				size_t ncells = StrCellsCount( Colors.Mark, Colors.MarkLen );
+
+				if (ncells > _MarkLM && ncells <= Opt.MaxFilenameIndentation)
+					_MarkLM = ncells;
+			}
+
 			fli.ColorsPtr = PooledHighlightDataColor(Colors);
 		}
+
+		return (void *)_MarkLM;
 	}
 
-	void DoAsync()
+	void *GetResult() { return GetThreadResult(); }
+
+	bool DoAsync()
 	{
-		if (!StartThread()) {
-			DoNow();
-		}
+		return StartThread();
 	}
 };
 
-void HighlightFiles::GetHiColor(FileListItem **FileItem, int FileCount, bool UseAttrHighlighting)
+void HighlightFiles::GetHiColor(FileListItem **FileItem, size_t FileCount, bool UseAttrHighlighting, size_t *_MarkLM)
 {
 	if (!FileItem || !FileCount)
 		return;
 
+	size_t MarkLM = 0;
+	size_t BestThreadsNum = std::max(BestThreadsCount(), 1u);
 	std::list<HighlightFilesChunk> async_hfc;
 
 	const int sFileCountTrh = 0x1000;	// empirically found, can be subject of (dynamic) adjustment
 
-	if (FileCount >= sFileCountTrh && BestThreadsCount() > 1) {
-		int FilePerCPU = std::max(FileCount / BestThreadsCount(), 0x400u);
-		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsCount()) {
+	if (FileCount >= sFileCountTrh && BestThreadsNum > 1) {
+		size_t FilePerCPU = std::max(FileCount / BestThreadsNum, (size_t)0x400u);
+
+		while (FileCount > FilePerCPU && async_hfc.size() + 1 < BestThreadsNum) {
 			async_hfc.emplace_back(CurrentTime, HiData, FileItem, FilePerCPU, UseAttrHighlighting);
-			async_hfc.back().DoAsync();
-			FileItem+= FilePerCPU;
-			FileCount-= FilePerCPU;
+			if (!async_hfc.back().DoAsync()) {
+				async_hfc.pop_back();
+				break;
+			}
+			FileItem += FilePerCPU;
+			FileCount -= FilePerCPU;
 		}
-		//		fprintf(stderr, "%s: spawned %u async processors %d files per each, %d files processed synchronously\n",
-		//			__FUNCTION__, (unsigned int)async_hfc.size(), FilePerCPU, FileCount);
 	}
 
-	HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
-	// async_hfc will join at d-tors
+	MarkLM = (size_t)HighlightFilesChunk(CurrentTime, HiData, FileItem, FileCount, UseAttrHighlighting).DoNow();
+
+	while(!async_hfc.empty( )) {
+		size_t len = (size_t)async_hfc.back().GetResult();
+		if (len > MarkLM)
+			MarkLM = len;
+		async_hfc.pop_back();
+	}
+
+	if (_MarkLM && *_MarkLM < MarkLM )
+		*_MarkLM = MarkLM;
 }
 
 int HighlightFiles::GetGroup(const FileListItem *fli)
@@ -583,12 +614,13 @@ void HighlightFiles::FillMenu(VMenu *HiMenu, int MenuPos)
 	};
 	HiMenu->DeleteItems();
 	HiMenuItem.Clear();
+	uint32_t attrstyle = Opt.AttrStrStyle;
 
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 
 			FileFilterParams *ffp = HiData.getItem(i);
-			MenuString(HiMenuItem.strName, ffp, true);
+			MenuString(HiMenuItem.strName, ffp, attrstyle, true);
 
 			if (ffp->GetFlags(FFFT_CUSTOM) & FFF_DISABLED) {
 				HiMenuItem.Flags |= LIF_GRAYED;
@@ -683,6 +715,11 @@ void HighlightFiles::HiEdit(int MenuPos)
 						$ 07.07.2000 IS
 						Если нажали ctrl+r, то восстановить значения по умолчанию.
 					*/
+				case KEY_CTRLM: {
+					Opt.AttrStrStyle ^= 1;
+					NeedUpdate = true;
+				}
+				break;
 
 				case KEY_SUBTRACT:
 				case KEY_ADD:
@@ -716,6 +753,7 @@ void HighlightFiles::HiEdit(int MenuPos)
 
 					{
 						ConfigWriter(RegColorsHighlight).RemoveSection();
+						ConfigWriter(SortGroupsKeyName).RemoveSection(); // see https://github.com/elfmz/far2l/issues/2605
 					}
 					HiMenu.Hide();
 					ClearData();
@@ -731,13 +769,79 @@ void HighlightFiles::HiEdit(int MenuPos)
 						const wchar_t *Mask;
 						HiData.getItem(RealSelectPos)->GetMask(&Mask);
 
-						if (Message(MSG_WARNING, 2, Msg::HighlightTitle, Msg::HighlightAskDel, Mask,
+						if (Message(MSG_WARNING, 2, Msg::HighlightTitle, Msg::HighlightAskDel,
+									HiData.getItem(RealSelectPos)->GetTitle(), Mask,
 									Msg::Delete, Msg::Cancel))
 							break;
 
 						HiData.deleteItem(RealSelectPos);
 						(*Count)--;
 						NeedUpdate = TRUE;
+					}
+
+					break;
+				}
+				case KEY_F3: { // show for current item file masks after expand all groups
+					int *Count = nullptr;
+					int RealSelectPos = MenuPosToRealPos(SelectPos, &Count);
+
+					if (Count && RealSelectPos < (int)HiData.getCount()) {
+						const wchar_t *fmask;
+						FileFilterParams *ffp = HiData.getItem(RealSelectPos);
+						FARString fs;
+
+						ExMessager em(Msg::HighlightViewTitle);
+						fs = Msg::HighlightViewName;
+						fs.AppendFormat(L" \"%ls\"", ffp->GetTitle());
+						em.AddDup(fs);
+						{
+							HighlightDataColor hl;
+							ffp->GetColors(&hl);
+							fs = Msg::HighlightViewMarker;
+							fs.AppendFormat(L" \"%ls\"", hl.Mark);
+							em.AddDup(fs);
+						}
+						if (!ffp->GetMask(&fmask) )
+							em.AddDup(Msg::HighlightViewMasksEmpty);
+						else {
+							fs = L"== " + Msg::FileFilterMatchMaskCase;
+							fs.AppendFormat(L": %s", ffp->GetMaskIgnoreCase() ? "OFF" : "ON");
+							em.AddDup(fs);
+							em.AddDup(L"");
+							em.AddDup(Msg::HighlightViewMasksBeforeExpand);
+							em.AddDupWrap(fmask);
+
+							// expand all groups
+							int ngroups = 0;
+							size_t pos_open, pos_close = 0;
+							FARString fs_group_name, fs_masks_from_group;
+							fs = fmask;
+							for( ;; ) {
+								if( !fs.Pos(pos_open, '<', pos_close) )
+									break;
+								if( !fs.Pos(pos_close, '>', pos_open+1) )
+									break;
+								if( pos_close-pos_open < 2 )
+									continue;
+								fs_group_name = fs.SubStr(pos_open+1, pos_close-pos_open-1);
+								if( !GetMaskGroup(fs_group_name, fs_masks_from_group) )
+									continue;
+								fs.Replace(pos_open, pos_close-pos_open+1, fs_masks_from_group);
+								pos_close = pos_open; // may be need recursive expand
+								ngroups++;
+							}
+							em.AddDup(L"");
+							fs_group_name = Msg::HighlightViewMasksCountExpandedGroups;
+							fs_group_name.AppendFormat(L" %d", ngroups);
+							em.AddDup(fs_group_name);
+							em.AddDup(L"");
+							em.AddDup(Msg::HighlightViewMasksAfterExpand);
+							em.AddDupWrap(fs);
+						}
+						em.AddDup(Msg::Ok);
+						em.AddDup(Msg::MaskGroupTitle);
+						if( em.Show(MSG_LEFTALIGN, 2) == 1)
+							MaskGroupsSettings();
 					}
 
 					break;
@@ -961,24 +1065,22 @@ static void SaveFilter(FileFilterParams *CurHiData, ConfigWriter &cfg_writer, bo
 	cfg_writer.SetULL(HLS.MarkCharSelectedCursorColorMask,
 			hl.Mask[HIGHLIGHTCOLORTYPE_MARKSTR][HIGHLIGHTCOLOR_SELECTEDUNDERCURSOR]);
 
-	{ // Save Mark str
-		FARString strMark = L"";
-		DWORD dwMarkChar = (hl.MarkLen == 1) ? hl.Mark[0] : 0;
-		dwMarkChar |= (0xFF0000 * hl.bMarkInherit);
-
-		cfg_writer.SetUInt(HLS.MarkChar, dwMarkChar);
-
-		if (hl.MarkLen > 1)
-			strMark = hl.Mark;
-
-		cfg_writer.SetString(HLS.MarkStr, strMark);
-	}
+	cfg_writer.SetUInt(HLS.Indent, hl.Indent);
+	cfg_writer.SetUInt(HLS.CFlags, hl.Flags);
+	cfg_writer.SetString(HLS.MarkStr, hl.Mark);
 
 	cfg_writer.SetInt(HLS.ContinueProcessing, (CurHiData->GetContinueProcessing() ? 1 : 0));
 }
 
 void HighlightFiles::SaveHiData()
 {
+	{
+		// hotfix for https://github.com/elfmz/far2l/issues/2605
+		// TODO: verify it's correct fix, not just a workaround
+		ConfigWriter(RegColorsHighlight).RemoveSection();
+		ConfigWriter(SortGroupsKeyName).RemoveSection();
+	}
+
 	std::string strRegKey, strGroupName;
 	const char *KeyNames[4] = {RegColorsHighlight, SortGroupsKeyName, SortGroupsKeyName, RegColorsHighlight};
 	const char *GroupNames[4] = {fmtFirstGroup, fmtUpperGroup, fmtLowerGroup, fmtLastGroup};
@@ -990,6 +1092,7 @@ void HighlightFiles::SaveHiData()
 	};
 
 	ConfigWriter cfg_writer;
+
 	for (int j = 0; j < 4; j++) {
 		for (int i = Count[j][0]; i < Count[j][1]; i++) {
 			strGroupName = StrPrintf(GroupNames[j], i - Count[j][0]);
@@ -1001,10 +1104,13 @@ void HighlightFiles::SaveHiData()
 			if (j == 1 || j == 2) {
 				const wchar_t *Mask = nullptr;
 				CurHiData->GetMask(&Mask);
+
 				cfg_writer.SelectSection(KeyNames[j]);
 				cfg_writer.SetString(strGroupName, Mask);
 			}
 			cfg_writer.SelectSection(strRegKey);
+			cfg_writer.SetString(HLS.Name, CurHiData->GetTitle());
+
 			SaveFilter(CurHiData, cfg_writer, (j == 1 || j == 2));
 		}
 
@@ -1024,28 +1130,41 @@ void HighlightFiles::SaveHiData()
 	}
 }
 
+void HighlightFiles::UpdateHighlighting(bool RefreshMasks)
+{
+	ScrBuf.Lock();	// отменяем всякую прорисовку
+
+	ProcessGroups();
+
+	if (RefreshMasks) {
+		for (size_t i = 0; i < HiData.getCount(); i++) {
+			HiData.getItem(i)->RefreshMask();
+		}
+	}
+
+	CtrlObject->Cp()->LeftPanel->Update(UPDATE_KEEP_SELECTION);
+	CtrlObject->Cp()->LeftPanel->Redraw();
+	CtrlObject->Cp()->RightPanel->Update(UPDATE_KEEP_SELECTION);
+	CtrlObject->Cp()->RightPanel->Redraw();
+
+	ScrBuf.Unlock();	// разрешаем прорисовку
+}
 
 ////////
 
 static bool operator==(const HighlightDataColor &hl1, const HighlightDataColor &hl2)
 {
-	if (hl1.MarkLen != hl2.MarkLen)
-		return false;
-	if (hl1.bMarkInherit != hl2.bMarkInherit)
+	if (hl1.Flags != hl2.Flags || hl1.MarkLen != hl2.MarkLen || hl1.Indent != hl2.Indent)
 		return false;
 
-	if (hl1.MarkLen)
-		if (memcmp(&hl1.Mark[0], &hl2.Mark[0], sizeof(wchar_t) * hl1.MarkLen))
-			return false;
+	if (hl1.MarkLen && wmemcmp(&hl1.Mark[0], &hl2.Mark[0], hl1.MarkLen) != 0)
+		return false;
 
-	for (size_t i = 0; i < ARRAYSIZE(hl1.Color); ++i) {
-		for (size_t j = 0; j < ARRAYSIZE(hl1.Color[i]); ++j) {
-			if (hl1.Color[i][j] != hl2.Color[i][j])
-				return false;
-			if (hl1.Mask[i][j] != hl2.Mask[i][j])
-				return false;
-		}
-	}
+	if (memcmp(hl1.Color, hl2.Color, sizeof(hl2.Color)) != 0)
+		return false;
+
+	if (memcmp(hl1.Mask, hl2.Mask, sizeof(hl2.Mask)) != 0)
+		return false;
 
 	return true;
 }
@@ -1054,7 +1173,8 @@ struct HighlightDataColorHash
 {
 	size_t operator()(const HighlightDataColor &hl) const
 	{
-		size_t out = hl.MarkLen * 0xFFFF;
+		size_t out = (hl.Flags + hl.Indent) ^ (hl.MarkLen * 0xFFFF);
+
 		for (size_t i = 0; i < ARRAYSIZE(hl.Color); ++i) {
 			for (size_t j = 0; j < ARRAYSIZE(hl.Color[i]); ++j) {
 				out ^= hl.Color[i][j] + hl.Mask[i][j] + ((i ^ j) << 16);
@@ -1071,6 +1191,7 @@ static std::atomic<const HighlightDataColor *> s_last_color{&DefaultStartingColo
 const HighlightDataColor *PooledHighlightDataColor(const HighlightDataColor &color)
 {
 	const HighlightDataColor *last_color = s_last_color.load(std::memory_order_relaxed);
+
 	if (color == *last_color) {
 		return last_color;
 	}

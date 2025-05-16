@@ -228,6 +228,17 @@ upd:"Change"
 upd:"Change"
 upd:"Change"
 
+Reset
+"Сбросить"
+"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+upd:"Reset"
+"Reiniciar"
+"Скинути"
+"Зкінуць"
+
 HCancel
 l:
 "&Отмена"
@@ -682,7 +693,7 @@ AltF9
 "Video"
 "Tryb"
 "Video"
-"Відео""
+"Відео"
 "Відэа"
 
 AltF10
@@ -1521,6 +1532,106 @@ le://End of functional keys
 ""
 ""
 
+MaskGroupTitle
+"Группы масок файлов"
+"Groups of file masks"
+"Skupiny masek souborů"
+"Gruppe der Datenmasken"
+upd:"Groups of file masks"
+"Grupy masek plików"
+"Grupos de máscara de archivos"
+"Групи масок файлів"
+"Суполкі масак файлаў"
+
+MaskGroupBottomTitle
+"Ins Del Enter/F4 F3 F7 Ctrl+Вверх/Вниз Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Up/Down Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Nahoru/Dolů Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Strg+Hoch/Runter Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Felfelé/Lefelé Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Wgórę/Wdół Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Arriba/Abajo Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Вгору/Вниз Ctrl+R"
+"Ins Del Enter/F4 F3 F7 Ctrl+Уверх/Уніз Ctrl+R"
+
+MaskGroupName
+"&Имя:"
+"&Name:"
+"Jmé&no:"
+"&Name:"
+"&Neve:"
+"&Nazwa:"
+"&Nombre:"
+"&Ім'я:"
+"&Імя:"
+
+MaskGroupMasks
+"Одна или несколько &масок файлов:"
+"A file &mask or several file masks:"
+"&Maska nebo masky souborů:"
+"Datei&maske (mehrere getrennt mit Komma):"
+"F&ájlmaszk(ok, vesszővel elválasztva):"
+"&Maska pliku lub kilka masek oddzielonych przecinkami:"
+"&Máscara de archivo o múltiples máscaras de archivos:"
+"Одна або декілька &масок файлів:"
+"Адна ці некалькі &масак файлаў"
+
+MaskGroupAskDelete
+"Вы хотите удалить"
+"Do you wish to delete"
+"Přejete si smazat"
+"Wollen Sie folgendes Objekt löschen"
+"Törölni akar"
+"Czy chcesz usunąć"
+"Quiere borrar"
+"Ви бажаєте видалити"
+"Вы жадаеце выдаліць"
+
+MaskGroupTargetFilter
+"&Имя цели для масок:"
+"Target &name for masks:"
+"&Cílové jméno pro masky:"
+"&Zielname für Masken:"
+"&Cél neve a maszkokhoz:
+"&Nazwa docelowa dla masek:"
+"&Nombre de destino para máscaras:"
+"&Ім'я цілі для масок:"
+"&Імя мэты для масак:"
+
+MaskGroupTotal
+"Всего: %d"
+"Total: %d"
+"Celkem: %d"
+"Insgesamt: %d"
+"Összesen: %d"
+"Razem: %d"
+"Total: %d"
+"Всього: %d"
+"Усяго: %d"
+
+MaskGroupWarning
+"Будут потеряны все Ваши настройки"
+"You will lose all changes"
+"Všechny změny budou ztraceny"
+"Sie verlieren jegliche Änderungen"
+"Minden változtatás elvész"
+"Wszystkie zmiany zostaną utracone"
+"Usted perderá todos los cambios"
+"Втрачені всі Ваші налаштування"
+"Будуць згублены усе Налады"
+
+MaskGroupRestore
+"Вы хотите восстановить наборы масок по умолчанию?"
+"Do you want to restore the default mask sets?"
+"Chcete obnovit výchozí sady masek?"
+"Möchten Sie die Standardmaskensätze wiederherstellen?"
+"Szeretné visszaállítani az alapértelmezett maszkhalmazokat?"
+"Czy chcesz przywrócić domyślne zestawy masek?"
+"¿Quieres restaurar los conjuntos de máscaras predeterminados?"
+"Ви хочете відновити набори масок за замовчуванням?"
+"Вы хочаце адновіць наборы масак па змаўчанні?"
+
+
 HistoryTitle
 l:
 "История команд"
@@ -1737,7 +1848,7 @@ upd:"Confirm elevated privileges use"
 
 ConfigRecycleBin
 "Удалять в &Корзину"
-"&Delete to Recycle Bin"
+"&Delete to Trash"
 "&Mazat do Koše"
 "In Papierkorb &löschen"
 "&Törlés a Lomtárba"
@@ -1769,7 +1880,7 @@ upd:"Disable &write cache"
 "Выключыць кэ&шаванне запісу"
 
 CopyXAttr
-"Копировать расширенные а&ттрибуты"
+"Копировать расширенные а&трибуты"
 "Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
 upd:"Copy extended a&ttributes"
@@ -2099,6 +2210,17 @@ ConfigAutoUpdateLimit2
 "якщо об'ектів більше"
 "калі аб'ектаў больш"
 
+ConfigClassicHotkeyLinkResolving
+"&Классическое разрешение ссылок по хоткеям"
+"Classic hotkey &link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+upd:"Classic hotkey link resolving"
+"&Класичне розширення посилань гарячими клавішами"
+upd:"Classic hotkey link resolving"
+
 ConfigAutoUpdateRemoteDrive
 "Автообновление с&етевых дисков"
 "Network drives autor&efresh"
@@ -2187,6 +2309,116 @@ ConfigShowSortMode
 "Показувати літеру режиму сор&тування"
 "Адлюстроўваць літару стану пара&дкавання"
 
+ConfigPanelHighlightMarksButton
+"Раскраска файлов - Маркировка"
+"Highlight files - Marking"   
+"Zvýrazňovat soubory - Označení"  
+"Dateien markieren - Markierung"
+"Fájlok kiemelése - Jelzés"    
+"Wyróżniaj pliki - Cechowanie"
+"Resaltar archivos - Marcado"   
+"Розфарбовка файлів - Маркування"
+"Размалёўка файлаў - Маркіроўка"
+
+ConfigPanelHighlightMarksTitle
+"Настройки панели - Раскраска файлов - Маркировка"
+"Panel settings - Highlight files - Marking"   
+"Nastavení panelů - Zvýrazňovat soubory - Označení"  
+"Panels einrichten - Dateien markieren - Markierung"
+"Panel beállítások - Fájlok kiemelése - Jelzés"    
+"Ustawienia panelu - Wyróżniaj pliki - Cechowanie"
+"Configuración de paneles - Resaltar archivos - Marcado"   
+"Налаштування панели - Розфарбовка файлів - Маркування"
+"Налады стужкі - Размалёўка файлаў - Маркіроўка"
+
+ConfigFilenameMarksStatusLine
+"Строка статуса: Показывать маркировку имен файлов"
+"Status line: Show file name markings"
+"Stavový řádek: Zobrazit označení názvů souborů"
+"Statuszeile: Dateinamenmarkierungen anzeigen"
+"Állapotsor: Fájlnevek megjelölésének megjelenítése"
+"Linia statusu: Pokaż oznaczenia nazw plików"
+"Línea de estado: Mostrar marcas de nombres de archivos"
+"Рядок статусу: Показати маркування імен файлів"
+"Радок стану: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksStatusLineHint
+"Ctrl-Alt-N для быстрого переключения на панелях"
+"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+upd:"Use Ctrl-Alt-N to quick toggle from panel"
+
+ConfigFilenameMarks
+"Панели: Показывать маркировку имен файлов"
+"Panel: Show file name markings"
+"Panely: Zobrazit označení názvů souborů"
+"Paneele: Dateinamenmarkierungen anzeigen"
+"Panelek: Fájlnevek megjelölésének megjelenítése"
+"Panele: Pokaż oznaczenia nazw plików"
+"Paneles: Mostrar marcas de nombres de archivos"
+"Панелі: Показати маркування імен файлів"
+"Панэлі: Паказаць маркіроўку імёнаў файлаў"
+
+ConfigFilenameMarksHint
+"Ctrl-Alt-M для быстрого переключения на панелях"
+"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+upd:"Use Ctrl-Alt-M to quick toggle from panel"
+
+ConfigFilenameMarksAlign
+"Выравнивать имена файлов по маркировкам"
+"Align file names by markings"
+"Vyrovnat názvy souborů podle označení"
+"Dateinamen nach Markierungen ausrichten"
+"Fájlneveket igazítani a megjelölések szerint"
+"Wyrównaj nazwy plików według oznaczeń"
+"Alinear nombres de archivos por marcas"
+"Вирівняти імена файлів за маркуваннями"
+"Выраўнаваць імёны файлаў па маркіроўках"
+
+ConfigFilenameMinMaxIndentation
+"Мин - макс отступ имен файлов"
+"Min - max file names indentation"
+"Min - max odsazení názvů souborů"
+"Min - max Abstand von Dateinamen"
+"Min - max fájlnevek behúzása"
+"Min - maks wcięcie nazw plików"
+"Sangrado mín - máx de nombres de archivos"
+"Мін - макс відступ імен файлів"
+"Мін - макс адступ імёнаў файлаў"
+
+ConfigFilenameMinIndentation
+"Фиксированный отступ имен файлов"
+"Fixed indentation of file names"
+"Opravené odsazení názvů souborů"
+"Festgelegte Einrückung von Dateinamen"
+"A fájlnevek rögzített behúzása"
+"Naprawione wcięcie nazw plików"
+"Sangría fija de nombres de archivos"
+"Виправлене відступлення імен файлів"
+"Выпраўлены адступ імёнаў файлаў"
+
+ConfigFilenameMaxIndentation
+"Максимальный отступ имен файлов"
+"Max file names indentation"
+"Maximální odsazení názvů souborů"
+"Maximaler Abstand von Dateinamen"
+"Maximális fájlnevek behúzása"
+"Maksymalne wcięcie nazw plików"
+"Sangrado Máximo de nombres de archivos"
+"Максимальний відступ імен файлів"
+"Максімальны адступ імёнаў файлаў"
+
 ConfigInterfaceTitle
 l:
 "Настройки интерфейса"
@@ -2210,6 +2442,148 @@ upd:"Input settings"
 upd:"Input settings"
 "Налаштування введення"
 "Налады увода"
+
+DirSettingsTitle
+"Каталоги и симлинки в колонке Размер"
+"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+upd:"Dirs and symlinks in Size column"
+
+DirSettingsHint
+"Ctrl-Alt-D для быстрого открытия с панелей"
+"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+upd:"Use Ctrl-Alt-D to quick open from panel"
+
+DirSettingsCenter
+"Выравнивать по &центру"
+"&Center align"
+"&Zarovnat do středu"
+"&Zentrieren"
+"&Középre igazítani"
+"&Wyśrodkować"
+"Alinear al &centro"
+"Вирівняти по &центру"
+"Выраўнаваць па &цэнтры"
+
+DirSettingsSurround
+"&Символы вокруг"
+"&Symbols around"
+"&Symboly kolem"
+"&Symbole um"
+"&Szimbólumok körül"
+"&Symbole wokół"
+"&Símbolos alrededor"
+"&Символи навколо"
+"&Сімвалы вакол"
+
+DirSettingsShowAs
+"Показывать &директорию как:"
+"Show &directory as:"
+"Zobrazit &adresář jako:"
+"&Verzeichnis anzeigen als:"
+"Könyvtár &megjelenítéseként:"
+"Pokaż &katalog jako:"
+"Mostrar &directorio como:"
+"Показувати &каталог як:"
+"Паказваць &каталог як:"
+
+DirSettingsWidthText
+"Подстройка &ширины колонки "Размер" под текст:"
+"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+upd:"Adjust "Size" column &width to text:"
+"Відрегулюйте &ширину колонки "Розмір" до тексту:"
+"Адрэгулюйце &шырыню слупка "Памер" да тэксту:"
+
+DirSettingsWidthCombo0
+"когда в режимах панели ширина колонки 0"
+"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+upd:"when in file panel mode it width is 0"
+"коли в режимі панелі файлів ширина 0"
+"калі ў рэжыме панэлі файла шырыня 0"
+
+DirSettingsWidthCombo1
+"всегда"
+"always"
+upd:"always"
+upd:"always"
+upd:"always"
+upd:"always"
+upd:"always"
+"завжди"
+"заўсёды"
+
+DirSettingsSymlinkText
+"Для симлинка на файл показывать:"
+"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+upd:"For symlink to file show:"
+
+DirSettingsSymlinkRadio1
+"&текст"
+"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+upd:"&text"
+DirSettingsSymlinkRadio2
+"размер целевого &файла"
+"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+upd:"size of target &file"
+
+DirSettingsApply
+"&Применить"
+"&Apply"
+"&Použít"
+"&Anwenden"
+"&Alkalmaz"
+"&Zastosować"
+"&Aplicar"
+"&Застосувати"
+"&Ужыць"
+
+DirSettingsSymlinkSizeHint
+"Ctrl-Alt-L для переключения из панелей"
+"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
+upd:"Use Ctrl-Alt-L to quick toggle from panel"
 
 ConfigClock
 "&Часы в панелях"
@@ -2377,7 +2751,7 @@ upd:"Override base colors &palette"
 "Ужываць сваю &палітру колераў"
 
 ConfigExclusiveKeys
-"&Экслюзивная обработка нажатий, включающих:"
+"&Эксклюзивная обработка нажатий, включающих:"
 "&Exclusively handle hotkeys that include:"
 upd:"&Exclusively handle hotkeys that include:"
 upd:"&Exclusively handle hotkeys that include:"
@@ -4569,51 +4943,6 @@ CannotCopyFileToItself2
 "у самого себе"
 "у самога сябе"
 
-CopyStream1
-l:
-"Исходный файл содержит более одного потока данных,"
-"The source file contains more than one data stream."
-"Zdrojový soubor obsahuje více než jeden datový proud."
-"Die Quelldatei enthält mehr als einen Datenstream"
-"A forrásfájl több stream-et tartalmaz,"
-"Plik źródłowy zawiera więcej niż jeden strumień danych."
-"El archivo origen contiene más de un flujo de datos."
-"Вихідний файл містить більше одного потоку даних,"
-"Зыходны файл змяшчае больш аднай струмені дадзеных,"
-
-CopyStream2
-"но вы не используете системную функцию копирования."
-"but since you do not use a system copy routine."
-"protože nepoužíváte systémovou kopírovací rutinu."
-"aber Sie verwenden derzeit nicht die systemeigene Kopierroutine."
-"de nem a rendszer másolórutinját használja."
-"ale ze względu na rezygnację z systemowej procedury kopiowania."
-"pero desde que usted no usa la rutina de copia del sistema."
-"але ви не використовуєте системну функцію копіювання."
-"але вы не ужываеце сістэмную функцыю капіявання."
-
-CopyStream3
-"но том назначения не поддерживает этой возможности."
-"but the destination volume does not support this feature."
-"protože cílový svazek nepodporuje tuto vlastnost."
-"aber der Zieldatenträger unterstützt diese Fähigkeit nicht."
-"de a célkötet nem támogatja ezt a lehetőséget."
-"ale napęd docelowy nie obsługuje tej funkcji."
-"pero el volumen de destino no soporta esta opción."
-"але тому призначення не підтримує цієї можливості."
-"але дыск прызначэння не падтрымлівае гэтай магчымасці."
-
-CopyStream4
-"Часть сведений не будет сохранена."
-"Some data will not be preserved as a result."
-"To bude mít za následek, že některá data nebudou uchována."
-"Ein Teil der Daten bleiben daher nicht erhalten."
-"Az adatok egy része el fog veszni."
-"Nie wszystkie dane zostaną zachowane."
-"Algunos datos no serán preservados como un resultado."
-"Частина відомостей не буде збережена."
-"Частка звестак не будзе захавана."
-
 CopyDirectoryOrFile
 l:
 "Подразумевается имя папки или файла?"
@@ -4904,39 +5233,6 @@ CannotCopyTo
 "в"
 "у"
 
-CopyEncryptWarn1
-"Файл"
-"The file"
-"Soubor"
-"Die Datei"
-"A fájl"
-"Plik"
-"El archivo"
-"Файл"
-"Файл"
-
-CopyEncryptWarn2
-"нельзя скопировать или переместить, не потеряв его шифрование."
-"cannot be copied or moved without losing its encryption."
-"nemůže být zkopírován nebo přesunut bez ztráty jeho šifrování."
-"kann nicht bewegt werden ohne ihre Verschlüsselung zu verlieren."
-"csak titkosítása elvesztésével másolható vagy mozgatható."
-"nie może zostać skopiowany/przeniesiony bez utraty szyfrowania"
-"no puede copiarse o moverse sin perder el cifrado."
-"Не можна скопіювати або перемістити, не втративши його шифрування."
-"Нельга капіяваць ці перанесці, не згубіўшы яго шыфраванне."
-
-CopyEncryptWarn3
-"Можно пропустить эту ошибку или отменить операцию."
-"You can choose to ignore this error and continue, or cancel."
-"Můžete tuto chybu ignorovat a pokračovat, nebo operaci ukončit."
-"Sie können dies ignorieren und fortfahren oder abbrechen."
-"Ennek ellenére folytathatja vagy felfüggesztheti."
-"Możesz zignorować błąd i kontynuować lub anulować operację."
-"Usted puede ignorar este error y continuar, o cancelar."
-"Можна пропустити цю помилку або скасувати операцію."
-"Можна прапусціць гэтую памылку альбо адмяніць дзею."
-
 CopyReadError
 l:
 "Ошибка чтения данных из"
@@ -5075,7 +5371,7 @@ AskDelete
 
 AskDeleteRecycleFolder
 "Вы хотите переместить в Корзину папку"
-"Do you wish to move to the Recycle Bin the folder"
+"Do you wish to move to the Trash the folder"
 "Přejete si přesunout do Koše adresář"
 "Wollen Sie den Ordner in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a mappát?"
@@ -5086,7 +5382,7 @@ AskDeleteRecycleFolder
 
 AskDeleteRecycleFile
 "Вы хотите переместить в Корзину файл"
-"Do you wish to move to the Recycle Bin the file"
+"Do you wish to move to the Trash the file"
 "Přejete si přesunout do Koše soubor"
 "Wollen Sie die Datei in den Papierkorb verschieben"
 "A Lomtárba akarja dobni a fájlt?"
@@ -5097,7 +5393,7 @@ AskDeleteRecycleFile
 
 AskDeleteRecycle
 "Вы хотите переместить в Корзину"
-"Do you wish to move to the Recycle Bin"
+"Do you wish to move to the Trash"
 "Přejete si přesunout do Koše"
 "Wollen Sie das Objekt in den Papierkorb verschieben"
 "A Lomtárba akar dobni"
@@ -5567,13 +5863,13 @@ DeleteRetry
 
 DeleteRetryNotRecycleBin
 "&Без корзины"
-"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
-upd:"&No Recycle Bin"
+"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
+upd:"&No Trash"
 "&Без Кошыка"
 
 DeleteSkip
@@ -9090,50 +9386,181 @@ ColumnMumLinks
 "КлС"
 "КлСпасылак"
 
-ListUp
-l:
+DirUp
 "Вверх"
-"  Up  "
+"Up"
 "Nahoru"
-" Hoch "
-"  Fel  "
+"Nach oben"
+"Felfelé"
 "W górę"
-"UP-DIR"
+"Arriba"
 "Вгору"
 "Уверх"
 
-ListFolder
+DirName
 "Папка"
 "Folder"
-"Adresář"
+"Složka"
 "Ordner"
-" Mappa "
+"Mappa"
 "Folder"
-" DIR  "
-"Тека"
-"Каталог"
+"Carpeta"
+"Папка"
+"Папка"
 
-ListSymLink
+DirUp2
+"КАТАЛОГ"
+"UP--DIR"
+"KATALOG"
+"KATALOG"
+"KATALÓG"
+"KATALOG"
+"CATÁLOG"
+"КАТАЛОГ"
+"КАТАЛОГ"
+
+DirName2
+"КАТАЛОГ"
+"SUB-DIR"
+"KATALOG"
+"KATALOG"
+"KATALÓG"
+"KATALOG"
+"CATÁLOG"
+"КАТАЛОГ"
+"КАТАЛОГ"
+
+DirUp3
+"ДИР-ВВЕРХ"
+"DIR-UP"
+"DIR-NAHORU"
+"VERZ-OBEN"
+"KÖNYV-FENT"
+"KAT-W GÓRĘ"
+"DIR-ARRIBA"
+"ДИР-ВГОРУ"
+"ДЫР-ЎВЕРХ"
+
+DirName3
+"ДИРЕКТОРИЯ"
+"DIRECTORY"
+"ADRESÁŘ"
+"VERZEICHNIS"
+"KÖNYVTÁR"
+"KATALOG"
+"DIRECTORIO"
+"ДИРЕКТОРІЯ"
+"ДЫРЭКТЫРЫЯ"
+
+DirUp4
+"ДИР-ВВЕРХ"
+"DIR-UP"
+"DIR-NAHORU"
+"VERZ-OBEN"
+"KÖNYV-FENT"
+"KAT-W GÓRĘ"
+"DIR-ARRIBA"
+"ДИР-ВГОРУ"
+"ДЫР-ЎВЕРХ"
+
+DirName4
+"ПОД-ДИРЕК"
+"SUB-DIR"
+"POD-ADRESÁ"
+"UNTERVERZ"
+"ALMAPPÁLYA"
+"PODKATALOG"
+"SUBDIRECTO"
+"ПІД-ДИРЕК"
+"ПАД-ДЫРЭК"
+
+SymLinkName
 "Ссылка"
 "Symlink"
 "Link"
 "Symlink"
 "SzimLnk"
 "LinkSym"
-" Enlac"
+"Enlac"
 "Посилання"
 "Спасылак"
 
-ListJunction
+SymLinkName2
+"Ссылка"
+"Symlink"
+"Syodkaz"
+"Symlink"
+"Hivatko"
+"Symlink"
+"Enlace"
+"Посилан"
+"Справка"
+
+SymLinkName3
+"ССЫЛКА"
+"SYMLINK"
+"SYODKAZ"
+"SYMLINK"
+"HIVATKO"
+"SYMLINK"
+"ENLACE"
+"ПОСИЛАН"
+"СПРАВКА"
+
+SymLinkName4
+"ССЫЛКА"
+"SYMLINK"
+"SYODKAZ"
+"SYMLINK"
+"HIVATKO"
+"SYMLINK"
+"ENLACE"
+"ПОСИЛАН"
+"СПРАВКА"
+
+JunctionName
 "Связь"
 "Junction"
 "Křížení"
 "Knoten"
 "Csomópt"
 "Dowiązania"
-" Junc "
+"Junc"
 "Зв'язок"
 "Злучэнне"
+
+JunctionName2
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
+
+JunctionName3
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
+
+JunctionName4
+"СВЯЗЬ"
+"JUNCDIR"
+"KŘÍŽENÍ"
+"KNOTEN"
+"CSOMÓPT"
+"DOWIĄZANIA"
+"JUNC"
+"ЗВ'ЯЗОК"
+"ЗЛУЧЭННЕ"
 
 ListBytes
 "Б"
@@ -11810,15 +12237,15 @@ l:
 "Меню фільтраў"
 
 FilterBottom
-"+ - Пробел I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Mezera I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Leer I X BS UmschBS Einf Entf F4 F5 StrgUp StrgDn"
-"+ - Szóköz I X BS Shift+BS Ins Del F4 F5 Ctrl+Fel Ctrl+Le"
-"+ - Spacja I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"Seleccione: '+' '-' Space. Editor: Ins Del F4"
-"+ - Пробіл I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
-"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up Ctrl+Dn"
+"+ - Пробел I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Mezera I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Leer I X BS UmschBS Einf Entf F4 F5 StrgUp/Dn Ctrl+M"
+"+ - Szóköz I X BS Shift+BS Ins Del F4 F5 Ctrl+Fel/Le Ctrl+M"
+"+ - Spacja I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"Seleccione: '+' '-' Space. Editor: Ins Del F4 Ctrl+M"
+"+ - Пробіл I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
+"+ - Space I X BS Shift+BS Ins Del F4 F5 Ctrl+Up/Dn Ctrl+M"
 
 PanelFileType
 "Файлы панели"
@@ -12544,15 +12971,15 @@ l:
 "Афарбоўка файлаў"
 
 HighlightBottom
-"+ - Пробел Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Mezera Ins Del F4 F5 Ctrl+Nahoru Ctrl+Dolů"
-"+ - Leer Einf Entf F4 F5 Strg+Up,Strg+Down Strg+R"
-"+ - Szóköz Ins Del F4 F5 Ctrl+Fel Ctrl+Le Ctrl+R"
-"+ - Spacja Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Пробіл Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
-"+ - Space Ins Del F4 F5 Ctrl+Up Ctrl+Down Ctrl+R"
+"+ - Пробел Ins Del Enter/F4 F3 F5 Ctrl+Вверх/Вниз Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5  Ctrl+Up/Down Ctrl+R Ctrl+M"
+"+ - Mezera Ins Del Enter/F4 F3 F5 Ctrl+Nahoru/Dolů Ctrl+M"
+"+ - Leer Einf Entf Enter/F4 F3 F5 Strg+Hoch/Runter Strg+R Strg+M"
+"+ - Szóköz Ins Del Enter/F4 F3 F5 Ctrl+Fel/Le Ctrl+R Ctrl+M"
+"+ - Spacja Ins Del Enter/F4 F3 F5 Ctrl+Wgórę/Wdół Ctrl+R Ctrl+M"
+"+ - Space Ins Del Enter/F4 F3 F5  Ctrl+Arriba/Abajo Ctrl+R Ctrl+M"
+"+ - Пробіл Ins Del Enter/F4 F3 F5 Ctrl+Вгору/Вниз Ctrl+R Ctrl+M"
+"+ - Прабел Ins Del Enter/F4 F3 F5 Ctrl+Уверх/Уніз Ctrl+R Ctrl+M"
 
 HighlightUpperSortGroup
 "Верхняя группа сортировки"
@@ -12620,6 +13047,83 @@ HighlightAskRestore
 "Ви хочете відновити забарвлення файлів за замовчуванням?"
 "Вы жадаеце узнавіць прадвызначаную афарбоўку файлаў?"
 
+HighlightViewTitle
+"Раскраска файлов - раскрытие групп масок"
+"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+upd:"Files highlighting expand Mask Groups"
+
+HighlightViewName
+"== Раскраска файлов - Имя:"
+"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+upd:"== Highlighting Name:"
+
+HighlightViewMarker
+"== Раскраска файлов - Маркер:"
+"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+upd:"== Highlighting Marker:"
+
+HighlightViewMasksEmpty
+"== Раскраска файлов - строка масок пуста"
+"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+upd:"== Highlighting has empty masks"
+
+HighlightViewMasksBeforeExpand
+"== Раскраска файлов - маски до раскрытия групп масок:"
+"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+upd:"== Highlighting masks before expand:"
+
+HighlightViewMasksCountExpandedGroups
+"== Число корректно раскрытых групп внутри масок:"
+"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+upd:"== Correctly expanded Groups inside Highlighting masks:"
+
+HighlightViewMasksAfterExpand
+"== Раскраска файлов - маски после раскрытия всех групп масок:"
+"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+upd:"== Highlighting masks after expand all groups:"
+
 HighlightEditTitle
 l:
 "Редактирование раскраски файлов"
@@ -12653,6 +13157,28 @@ HighlightMarkStrInherit
 "Heredar"
 "Спадкувати"
 "Падзярэваць"
+
+HighlightMarkAddInherit
+"Добавить"
+"Add"
+"Přidat"
+"Hinzufügen"
+"Hozzáad"
+"Dodaj"
+"Añadir"
+"Додати"
+"Дадаць"
+
+HighlightCustomIdent
+"Отступ"
+"Indent"
+"Odsazení"
+"Einzug"
+"Behúzás"
+"Wcięcie"
+"Sangría"
+"Відступ"
+"Адступ"
 
 HighlightColors
 " Цвета файлов (\"чёрный на чёрном\" - цвет по умолчанию) "
@@ -12820,138 +13346,6 @@ InfoUserName
 "Им'я користувача"
 "Імя карыстальніка"
 
-InfoRemovable
-"Сменный"
-"Removable"
-"Vyměnitelný"
-"Austauschbares"
-"Kivehető"
-"Wyjmowalny"
-"Removible"
-"Змінний"
-"Зменны"
-
-InfoFixed
-"Жёсткий"
-"Fixed"
-"Pevný"
-"Lokales"
-"Fix"
-"Stały"
-"Rígido"
-"Жорсткий"
-"Замацаваныя"
-
-InfoNetwork
-"Сетевой"
-"Network"
-"Síťový"
-"Netzwerk"
-"Hálózati"
-"Sieciowy"
-"Red"
-"Мережевий"
-"Сеткавы"
-
-InfoCDROM
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-"CD-ROM"
-
-InfoCD_RW
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-"CD-RW"
-
-InfoCD_RWDVD
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-"CD-RW/DVD"
-
-InfoDVD_ROM
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-"DVD-ROM"
-
-InfoDVD_RW
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-"DVD-RW"
-
-InfoDVD_RAM
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-"DVD-RAM"
-
-InfoRAM
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-"RAM"
-
-InfoSUBST
-"SUBST"
-"Subst"
-"SUBST"
-"Subst"
-"Virtuális"
-"Subst"
-"Subst"
-"SUBST"
-"SUBST"
-
-InfoVirtual
-"Виртуальный"
-"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-upd:"Virtual"
-"Віртуальний"
-"Уяўны"
-
 InfoDisk
 "диск"
 "disk"
@@ -13007,16 +13401,159 @@ InfoDiskNumber
 "Серійний номер"
 "Серыйны нумар"
 
+InfoDiskCurDir
+"Текущий каталог"
+"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+upd:"Current Directory"
+
+InfoDiskRealDir
+"Реальный путь к каталогу"
+"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+upd:"Real Directory Path"
+
+InfoDiskMountPoint
+"ФС Точка монтирования"
+"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+upd:"FS Mount Point"
+
+InfoDiskMaxFilenameLength
+"ФС Максимальная длина имени"
+"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+upd:"FS Maximum Filename Length"
+
+InfoDiskFlags
+"ФС Флаги"
+"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+upd:"FS Flags"
+
+InfoPluginTitle
+"Плагин на панели"
+"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+upd:"Plugin in panel"
+
+InfoPluginStartDir
+"Плагин запущен в каталоге"
+"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+upd:"Plugin start in Directory"
+
+InfoPluginModuleName
+"Plugin Module Name"
+"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+upd:"Plugin Module Name"
+
+InfoPluginHostFile
+"Plugin HostFile"
+"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+upd:"Plugin HostFile"
+
+InfoPluginCurDir
+"Plugin CurDir"
+"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+upd:"Plugin CurDir"
+
+InfoPluginPanelTitle
+"Plugin PanelTitle"
+"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+upd:"Plugin PanelTitle"
+
+InfoPluginFormat
+"Plugin Format"
+"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+upd:"Plugin Format"
+
+InfoPluginShortcutData
+"Plugin ShortcutData"
+"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+upd:"Plugin ShortcutData"
+
 InfoMemory
-" Память "
-" Memory "
-" Paměť "
-" Speicher "
-" Memória "
-" Pamięć "
-" Memoria "
-" Пам'ять "
-" Памяць "
+"Память"
+"Memory"
+"Paměť"
+"Speicher"
+"Memória"
+"Pamięć"
+"Memoria"
+"Пам'ять"
+"Памяць"
 
 InfoMemoryLoad
 "Загрузка памяти"
@@ -13028,17 +13565,6 @@ InfoMemoryLoad
 "Carga en Memoria"
 "Завантаження пам'яті"
 "Загрузка памяці"
-
-InfoMemoryInstalled
-"Установлено памяти"
-"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-upd:"Installed memory"
-"Memoria instalada"
-"Встановлено пам'яті"
-"Усталявана памяці"
 
 InfoMemoryTotal
 "Всего памяти"
@@ -13106,6 +13632,50 @@ upd:"Free paging file"
 "Вільно файлу підкачки"
 "Вольна файла падпампоўкі"
 
+InfoEdCfgNearestDir
+".editorconfig Nearest Dir"
+".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+upd:".editorconfig Nearest Dir"
+
+InfoEdCfgRootDir
+".editorconfig Root Dir"
+".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+upd:".editorconfig Root Dir"
+
+InfoGitRootDir
+"Git Root Directory"
+"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+upd:"Git Root Directory"
+
+InfoDescription
+"Описание"
+"Description"
+"Popis"
+"Beschreibung"
+"Megjegyzés"
+"Opis"
+"Descripción"
+"Опис"
+"Апісанне"
+
 InfoDizAbsent
 "Файл описания папки отсутствует"
 "Folder description file is absent"
@@ -13116,6 +13686,28 @@ InfoDizAbsent
 "archivo descripción del directorio está ausente"
 "Файл опису теки відсутній"
 "Файл апісання каталога адсутнічае"
+
+InfoPluginDescription
+"Описание от плагина"
+"Plugin Description"
+"Plugin Popis"
+"Plugin Beschreibung"
+"Plugin Megjegyzés"
+"Plugin Opis"
+"Plugin Descripción"
+"Опис від модуля"
+"Апісанне ад дадаткі"
+
+InfoPluginAbsent
+"Расширенная информация от плагина отсутствует"
+"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
+upd:"Plugin information is absent"
 
 ErrorInvalidFunction
 l:
@@ -13664,7 +14256,7 @@ l:
 "&Краткий                  LCtrl+1"
 "&Brief              LCtrl+1"
 "&Stručný                  LCtrl+1"
-"&Kurz                 LStrg-1"
+"&Kurz                 LStrg+1"
 "&Rövid              BalCtrl+1"
 "&Skrótowy             LCtrl+1"
 "&Breve                 LCtrl+1"
@@ -13675,7 +14267,7 @@ MenuMediumView
 "&Средний                  LCtrl+2"
 "&Medium             LCtrl+2"
 "S&třední                  LCtrl+2"
-"&Mittel               LStrg-2"
+"&Mittel               LStrg+2"
 "&Közepes            BalCtrl+2"
 "Ś&redni               LCtrl+2"
 "&Medio                 LCtrl+2"
@@ -13686,7 +14278,7 @@ MenuFullView
 "&Полный                   LCtrl+3"
 "&Full               LCtrl+3"
 "&Plný                     LCtrl+3"
-"&Voll                 LStrg-3"
+"&Voll                 LStrg+3"
 "&Teljes             BalCtrl+3"
 "&Pełny                LCtrl+3"
 "&Completo              LCtrl+3"
@@ -13697,7 +14289,7 @@ MenuWideView
 "&Широкий                  LCtrl+4"
 "&Wide               LCtrl+4"
 "Š&iroký                   LCtrl+4"
-"B&reitformat          LStrg-4"
+"B&reitformat          LStrg+4"
 "&Széles             BalCtrl+4"
 "S&zeroki              LCtrl+4"
 "&Amplio                LCtrl+4"
@@ -13708,7 +14300,7 @@ MenuDetailedView
 "&Детальный                LCtrl+5"
 "Detai&led           LCtrl+5"
 "Detai&lní                 LCtrl+5"
-"Detai&lliert          LStrg-5"
+"Detai&lliert          LStrg+5"
 "Rész&letes          BalCtrl+5"
 "Ze sz&czegółami       LCtrl+5"
 "De&tallado             LCtrl+5"
@@ -13719,7 +14311,7 @@ MenuDizView
 "&Описания                 LCtrl+6"
 "&Descriptions       LCtrl+6"
 "P&opisky                  LCtrl+6"
-"&Beschreibungen       LStrg-6"
+"&Beschreibungen       LStrg+6"
 "Fájl&megjegyzések   BalCtrl+6"
 "&Opisy                LCtrl+6"
 "&Descripción           LCtrl+6"
@@ -13730,7 +14322,7 @@ MenuLongDizView
 "Д&линные описания         LCtrl+7"
 "Lon&g descriptions  LCtrl+7"
 "&Dlouhé popisky           LCtrl+7"
-"Lan&ge Beschreibungen LStrg-7"
+"Lan&ge Beschreibungen LStrg+7"
 "&Hosszú megjegyzés  BalCtrl+7"
 "&Długie opisy         LCtrl+7"
 "Descripción lar&ga     LCtrl+7"
@@ -13741,29 +14333,29 @@ MenuOwnersView
 "Вл&адельцы файлов         LCtrl+8"
 "File own&ers        LCtrl+8"
 "Vlastník so&uboru         LCtrl+8"
-"B&esitzer             LStrg-8"
+"B&esitzer             LStrg+8"
 "Fájl tula&jdonos    BalCtrl+8"
 "&Właściciele          LCtrl+8"
 "Du&eños de archivos    LCtrl+8"
-"Власники файлів           LCtrl+8"
+"Власники файлів          LCtrl+8"
 "Ул&адальнікі файлаў        LCtrl+8"
 
 MenuLinksView
 "Свя&зи файлов             LCtrl+9"
 "File lin&ks         LCtrl+9"
 "Souborové lin&ky          LCtrl+9"
-"Dateilin&ks           LStrg-9"
+"Dateilin&ks           LStrg+9"
 "Fájl li&nkek        BalCtrl+9"
 "Dowiąza&nia           LCtrl+9"
 "En&laces               LCtrl+9"
-"Зв'язки файлів            LCtrl+9"
+"Зв'язки файлів           LCtrl+9"
 "Сувя&зя файлаў             LCtrl+9"
 
 MenuAlternativeView
 "Аль&тернативный полный    LCtrl+0"
 "&Alternative full   LCtrl+0"
 "&Alternativní plný        LCtrl+0"
-"&Alternativ voll      LStrg-0"
+"&Alternativ voll      LStrg+0"
 "&Alternatív teljes  BalCtrl+0"
 "&Alternatywny         LCtrl+0"
 "Alternativo com&pleto  LCtrl+0"
@@ -13775,7 +14367,7 @@ l:
 "Панель ин&формации        Ctrl+L"
 "&Info panel         Ctrl+L"
 "Panel In&fo               Ctrl+L"
-"&Infopanel            Strg-L"
+"&Infopanel            Strg+L"
 "&Info panel         Ctrl+L"
 "Panel informacy&jny   Ctrl+L"
 "Panel &información     Ctrl+L"
@@ -13786,7 +14378,7 @@ MenuTreePanel
 "Де&рево папок             Ctrl+T"
 "&Tree panel         Ctrl+T"
 "Panel St&rom              Ctrl+T"
-"Baumansich&t          Strg-T"
+"Baumansich&t          Strg+T"
 "&Fastruktúra        Ctrl+T"
 "Drz&ewo               Ctrl+T"
 "Panel árbol           Ctrl+T"
@@ -13797,7 +14389,7 @@ MenuQuickView
 "Быстры&й просмотр         Ctrl+Q"
 "Quick &view         Ctrl+Q"
 "Z&běžné zobrazení         Ctrl+Q"
-"Sc&hnellansicht       Strg-Q"
+"Sc&hnellansicht       Strg+Q"
 "&Gyorsnézet         Ctrl+Q"
 "Sz&ybki podgląd       Ctrl+Q"
 "&Vista rápida          Ctrl+Q"
@@ -13808,7 +14400,7 @@ MenuSortModes
 "Режим&ы сортировки        Ctrl+F12"
 "&Sort modes         Ctrl+F12"
 "Módy řaze&ní              Ctrl+F12"
-"&Sortiermodi          Strg-F12"
+"&Sortiermodi          Strg+F12"
 "R&endezési elv      Ctrl+F12"
 "Try&by sortowania     Ctrl+F12"
 "&Ordenar por...        Ctrl+F12"
@@ -13819,7 +14411,7 @@ MenuLongNames
 "Показывать длинные &имена Ctrl+N"
 "Show long &names    Ctrl+N"
 "Zobrazit dlouhé názv&y    Ctrl+N"
-"Lange Datei&namen     Strg-N"
+"Lange Datei&namen     Strg+N"
 "H&osszú fájlnevek   Ctrl+N"
 "Po&każ długie nazwy   Ctrl+N"
 "Ver &nombres largos    Ctrl+N"
@@ -13830,7 +14422,7 @@ MenuTogglePanel
 "Панель &Вкл/Выкл          Ctrl+F1"
 "Panel &On/Off       Ctrl+F1"
 "Panel &Zap/Vyp            Ctrl+F1"
-"&Panel ein/aus        Strg-F1"
+"&Panel ein/aus        Strg+F1"
 "&Panel be/ki        Ctrl+F1"
 "Włącz/Wyłącz pane&l   Ctrl+F1"
 "Panel &Si/No           Ctrl+F1"
@@ -13841,22 +14433,22 @@ MenuReread
 "П&еречитать               Ctrl+R"
 "&Re-read            Ctrl+R"
 "Obno&vit                  Ctrl+R"
-"Aktualisie&ren        Strg-R"
+"Aktualisie&ren        Strg+R"
 "Friss&ítés          Ctrl+R"
 "Odśw&ież              Ctrl+R"
 "&Releer                Ctrl+R"
-"Перечитати                Ctrl+R"
+"Перечитати               Ctrl+R"
 "П&ерачытаць                Ctrl+R"
 
 MenuChangeDrive
-"&Меню перехода             Alt+F1"
-"Lo&cation menu       Alt+F1"
+"&Меню перехода            Alt+F1"
+"Lo&cation menu      Alt+F1"
 "Z&měnit jednotku          Alt+F1"
 "Laufwerk we&chseln    Alt+F1"
 "Meghajtó&váltás     Alt+F1"
 "Z&mień napęd          Alt+F1"
 "Cambiar &unidad        Alt+F1"
-"З&мінити диск             Alt+F1"
+"&Меню переходу            Alt+F1"
 "З&мяніць дыск              Alt+F1"
 
 MenuView
@@ -13903,6 +14495,17 @@ MenuMove
 "&Renombrar o mover     F6"
 "П&еренесення           F6"
 "П&еранесці             F6"
+
+MenuLink
+"Ссы&лка                Alt+F6"
+"Lin&k               Alt+F6"
+"Link                       Alt+F6"
+upd:"Li&nk                 Alt+F6"
+upd:"&Link                 Alt+F6"
+"Link                      Alt+F6"
+"En&lace                Alt+F6"
+"Поси&лання             Alt+F6"
+"Спасы&лак              Alt+F6"
 
 MenuCreateFolder
 "&Создание папки        F7"
@@ -13974,18 +14577,29 @@ MenuAttributes
 "А&трибуты файлов       Ctrl+A"
 "File &attributes    Ctrl+A"
 "A&tributy souboru           Ctrl+A"
-"Datei&attribute       Strg-A"
+"Datei&attribute       Strg+A"
 "Fájl &attribútumok    Ctrl+A"
 "&Atrybuty pliku            Ctrl+A"
 "Cambiar &atributos     Ctrl+A"
 "А&трибути файлів       Ctrl+A"
 "А&трыбуты файлаў       Ctrl+A"
 
+MenuChattr
+"chattr / chflag&s      Ctrl+Alt+A"
+"chattr / ch&flags   Ctrl+Alt+A"
+upd:"chattr / ch&flags           Ctrl+Alt+A"
+upd:"chattr / ch&flags     Strg+Alt+A"
+upd:"c&hattr / chflags     Ctrl+Alt+A"
+upd:"chattr / ch&flags          Ctrl+Alt+A"
+upd:"chattr / ch&flags      Ctrl+Alt+A"
+upd:"chattr / chflag&s      Ctrl+Alt+A"
+upd:"c&hattr / chflags      Ctrl+Alt+A"
+
 MenuApplyCommand
 "Применить коман&ду     Ctrl+G"
 "A&pply command      Ctrl+G"
 "Ap&likovat příkaz           Ctrl+G"
-"Befehl an&wenden      Strg-G"
+"Befehl an&wenden      Strg+G"
 "Parancs &végrehajtása Ctrl+G"
 "Zastosuj pole&cenie        Ctrl+G"
 "A&plicar comando       Ctrl+G"
@@ -13996,7 +14610,7 @@ MenuDescribe
 "&Описание файлов       Ctrl+Z"
 "Descri&be files     Ctrl+Z"
 "Přidat popisek sou&borům    Ctrl+Z"
-"Beschrei&bung ändern  Strg-Z"
+"Beschrei&bung ändern  Strg+Z"
 "Fájlmegje&gyzés       Ctrl+Z"
 "&Opisz pliki               Ctrl+Z"
 "Describir &archivo     Ctrl+Z"
@@ -14022,8 +14636,8 @@ MenuUnselectGroup
 "Jelölést l&evesz      Szürke -"
 "Odz&nacz grupę             Szary -"
 "Deseleccio&nar grupo   Gray -"
-"З&няти позначку         Gray -"
-"З&няць адзнаку          Gray -"
+"З&няти позначку        Gray -"
+"З&няць адзнаку         Gray -"
 
 MenuInvertSelection
 "&Инверсия пометки      Gray *"
@@ -14040,7 +14654,7 @@ MenuRestoreSelection
 "Восстановить по&метку  Ctrl+M"
 "Re&store selection  Ctrl+M"
 "&Obnovit výběr              Ctrl+M"
-"Auswahl wiederher&st. Strg-M"
+"Auswahl wiederher&st. Strg+M"
 "Jel&ölést visszatesz  Ctrl+M"
 "Odtwórz zaznaczen&ie       Ctrl+M"
 "Re&staurar selec.      Ctrl+M"
@@ -14056,8 +14670,8 @@ l:
 "Fájl&keresés         Alt+F7"
 "&Znajdź plik               Alt+F7"
 "Buscar &archivos       Alt+F7"
-"&Пошук файла              Alt+F7"
-"&Пошук файла              Alt+F7"
+"&Пошук файла               Alt+F7"
+"&Пошук файла               Alt+F7"
 
 MenuHistory
 "&История команд           Alt+F8"
@@ -14067,8 +14681,8 @@ MenuHistory
 "Parancs &előzmények  Alt+F8"
 "&Historia                  Alt+F8"
 "&Historial             Alt+F8"
-"&Історія команд           Alt+F8"
-"Г&історыя камандаў        Alt+F8"
+"&Історія команд            Alt+F8"
+"Г&історыя камандаў         Alt+F8"
 
 MenuVideoMode
 "Видео&режим               Alt+F9"
@@ -14078,8 +14692,8 @@ MenuVideoMode
 "&Video mód           Alt+F9"
 "&Tryb wyświetlania         Alt+F9"
 "Modo de video         Alt+F9"
-"Відео&режим               Alt+F9"
-"Відэа&рэжым               Alt+F9"
+"Відео&режим                Alt+F9"
+"Відэа&рэжым                Alt+F9"
 
 MenuFindFolder
 "Поис&к папки              Alt+F10"
@@ -14089,8 +14703,8 @@ MenuFindFolder
 "&Mappakeresés        Alt+F10"
 "Znajdź kata&log            Alt+F10"
 "Buscar &directorios    Alt+F10"
-"Пошу&к теки               Alt+F10"
-"Пошу&к каталога           Alt+F10"
+"Пошу&к теки                Alt+F10"
+"Пошу&к каталога            Alt+F10"
 
 MenuViewHistory
 "Ис&тория просмотра        Alt+F11"
@@ -14100,8 +14714,8 @@ MenuViewHistory
 "Fáj&l előzmények     Alt+F11"
 "Historia &podglądu plików  Alt+F11"
 "Historial &visor       Alt+F11"
-"Іс&торія перегляду        Alt+F11"
-"Гіс&торыя прагляду        Alt+F11"
+"Іс&торія перегляду         Alt+F11"
+"Гіс&торыя прагляду         Alt+F11"
 
 MenuFoldersHistory
 "Ист&ория папок            Alt+F12"
@@ -14111,30 +14725,52 @@ MenuFoldersHistory
 "Ma&ppa előzmények    Alt+F12"
 "Historia &katalogów        Alt+F12"
 "Histo&rial dir.        Alt+F12"
-"Іст&орія тек              Alt+F12"
-"Гіст&орыя каталогаў       Alt+F12"
+"Іст&орія тек               Alt+F12"
+"Гіст&орыя каталогаў        Alt+F12"
 
 MenuSwapPanels
 "По&менять панели          Ctrl+U"
 "&Swap panels         Ctrl+U"
 "Prohodit panel&y                Ctrl+U"
-"Panels tau&schen      Strg-U"
+"Panels tau&schen      Strg+U"
 "Panel&csere          Ctrl+U"
 "Z&amień panele             Ctrl+U"
 "I&nvertir paneles      Ctrl+U"
 "Зм&інити панелі            Ctrl+U"
-"З&мяніць панэлі           Ctrl+U"
+"З&мяніць панэлі            Ctrl+U"
+
+MenuHorizontalPanels
+"Горизонтал&ьные панели    Ctrl+,"
+"Hori&zontal panels   Ctrl+,"
+"Hori&zontální panely            Ctrl+,"
+"Hori&zontale Paneele  Strg+,"
+"Hori&zontális panel  Ctrl+,"
+"Po&ziome panele            Ctrl+,"
+"Paneles hori&zontales  Ctrl+,"
+"Горизонтал&ьні панелі      Ctrl+,"
+"Горизантал&ьныя панэлі     Ctrl+,"
+
+MenuVerticalPanels
+"Вертикал&ьные панели      Ctrl+,"
+"Ver&tical panels     Ctrl+,"
+"Ver&tikální panely              Ctrl+,"
+"Ver&tikale Paneele    Strg+,"
+"Ver&tikális panelek  Ctrl+,"
+"Pionow&e panele            Ctrl+,"
+"Paneles ver&ticales    Ctrl+,"
+"Вертикал&ьні панелі        Ctrl+,"
+"Вертыкал&ьныя панэлі       Ctrl+,"
 
 MenuTogglePanels
 "Панели &Вкл/Выкл          Ctrl+O"
 "&Panels On/Off       Ctrl+O"
 "&Panely Zap/Vyp                 Ctrl+O"
-"&Panels ein/aus       Strg-O"
+"&Panels ein/aus       Strg+O"
 "Panelek &be/ki       Ctrl+O"
 "&Włącz/Wyłącz panele       Ctrl+O"
 "&Paneles Si/No         Ctrl+O"
 "Панели &Ввмк/Вимк          Ctrl+O"
-"Панели &Укл/Адкл          Ctrl+O"
+"Панели &Укл/Адкл           Ctrl+O"
 
 MenuCompareFolders
 "&Сравнение папок"
@@ -14184,7 +14820,7 @@ MenuFilter
 "&Фильтр панели файлов     Ctrl+I"
 "File panel f&ilter   Ctrl+I"
 "F&iltr panelu souborů           Ctrl+I"
-"Panelf&ilter          Strg-I"
+"Panelf&ilter          Strg+I"
 "Fájlpanel &szűrők    Ctrl+I"
 "&Filtr panelu plików       Ctrl+I"
 "F&iltro de paneles     Ctrl+I"
@@ -14210,30 +14846,19 @@ MenuWindowsList
 "Képer&nyők           F12"
 "L&ista ekranów             F12"
 "&Listado ventanas      F12"
-"Список екра&нів           F12"
-"Спіс экра&наў             F12"
+"Список екра&нів            F12"
+"Спіс экра&наў              F12"
 
 MenuProcessList
 "Список &задач             Ctrl+W"
 "Task &list           Ctrl+W"
 "Seznam úl&oh                    Ctrl+W"
-"Task&liste            Strg-W"
+"Task&liste            Strg+W"
 "Futó p&rogramok      Ctrl+W"
 "Lista za&dań               Ctrl+W"
 "Lista de &tareas       Ctrl+W"
-"Список & завдань          Ctrl+W"
-"Спіс &задачаў             Ctrl+W"
-
-MenuHotPlugList
-"Список Hotplug-&устройств"
-"Ho&tplug devices list"
-"Seznam v&yjímatelných zařízení"
-"Sicheres En&tfernen"
-"H&otplug eszközök"
-"Lista urządzeń Ho&tplug"
-"Lista de dispositivos ho&tplug"
-"Список Hotplug-&пристроїв"
-"Спіс прылад гарачай &устаноўкі"
+"Список & завдань           Ctrl+W"
+"Спіс &задачаў              Ctrl+W"
 
 MenuSystemSettings
 l:
@@ -14356,6 +14981,17 @@ upd:"AutoComplete && History settings"
 "Opciones de autocompletar e historial"
 "На&лаштування автозавершення та історії"
 "На&лады аўтазаканчэння і гістарычных"
+
+MenuMaskGroups
+"Группы масок файлов"
+"Groups of file mas&ks"
+"Skupiny masek souborů"
+"Gruppe der Datenmasken"
+upd:"Groups of file masks"
+"Grupy masek p&lików"
+"Grupos de máscara de archivos"
+"Групи масок файлів"
+"Суполкі масак файлаў"
 
 MenuInfoPanelSettings
 "Нас&тройки информационной панели"
@@ -14493,23 +15129,23 @@ MenuTogglePanelRight
 "Панель &Вкл/Выкл          Ctrl+F2"
 "Panel &On/Off       Ctrl+F2"
 "Panel &Zap/Vyp            Ctrl+F2"
-"Panel &ein/aus        Strg-F2"
+"Panel &ein/aus        Strg+F2"
 "Panel be/&ki        Ctrl+F2"
 "Włącz/wyłącz pane&l   Ctrl+F2"
 "Panel &Si/No           Ctrl+F2"
 "Панель &Ввмк/Вимк         Ctrl+F2"
-"Панэль &Укл/Адкл          Ctrl+F2"
+"Панэль &Укл/Адкл           Ctrl+F2"
 
 MenuChangeDriveRight
-"&Меню перехода             Alt+F2"
-"Lo&cation menu       Alt+F2"
+"&Меню перехода            Alt+F2"
+"Lo&cation menu      Alt+F2"
 "Z&měnit jednotku          Alt+F2"
 "Laufwerk &wechseln    Alt+F2"
 "Meghajtó&váltás     Alt+F2"
 "Z&mień napęd          Alt+F2"
 "Cambiar &unidad        Alt+F2"
-"З&мінити диск             Alt+F2"
-"З&мяніць дыск             Alt+F2"
+"&Меню переходу            Alt+F2"
+"З&мяніць дыск              Alt+F2"
 
 MenuLeftTitle
 l:
@@ -14583,7 +15219,7 @@ MenuSortByName
 "&Имя                              Ctrl+F3"
 "&Name                   Ctrl+F3"
 "&Názvu                     Ctrl+F3"
-"&Name                   Strg-F3"
+"&Name                   Strg+F3"
 "&Név                  Ctrl+F3"
 "&nazwy                       Ctrl+F3"
 "&Nombre               Ctrl+F3"
@@ -14594,7 +15230,7 @@ MenuSortByExt
 "&Расширение                       Ctrl+F4"
 "E&xtension              Ctrl+F4"
 "&Přípony                   Ctrl+F4"
-"&Erweiterung            Strg-F4"
+"&Erweiterung            Strg+F4"
 "Ki&terjesztés         Ctrl+F4"
 "ro&zszerzenia                Ctrl+F4"
 "E&xtensión            Ctrl+F4"
@@ -14616,7 +15252,7 @@ MenuSortBySize
 "Р&азмер                           Ctrl+F6"
 "&Size                   Ctrl+F6"
 "&Velikosti                 Ctrl+F6"
-"&Größe                  Strg-F6"
+"&Größe                  Strg+F6"
 "&Méret                Ctrl+F6"
 "&rozmiaru                    Ctrl+F6"
 "&Tamaño               Ctrl+F6"
@@ -14627,7 +15263,7 @@ MenuUnsorted
 "&Не сортировать                   Ctrl+F7"
 "&Unsorted               Ctrl+F7"
 "N&eřadit                   Ctrl+F7"
-"&Unsortiert             Strg-F7"
+"&Unsortiert             Strg+F7"
 "&Rendezetlen          Ctrl+F7"
 "&bez sortowania              Ctrl+F7"
 "&Sin ordenar          Ctrl+F7"
@@ -14638,7 +15274,7 @@ MenuSortByCreation
 "Время &создания                   Ctrl+F8"
 "&Creation time          Ctrl+F8"
 "&Data vytvoření            Ctrl+F8"
-"E&rstelldatum           Strg-F8"
+"E&rstelldatum           Strg+F8"
 "Ke&letkezés ideje     Ctrl+F8"
 "czasu u&tworzenia            Ctrl+F8"
 "Fecha de &creación    Ctrl+F8"
@@ -14649,7 +15285,7 @@ MenuSortByAccess
 "Время &доступа                    Ctrl+F9"
 "&Access time            Ctrl+F9"
 "Ča&su přístupu             Ctrl+F9"
-"&Zugriffsdatum          Strg-F9"
+"&Zugriffsdatum          Strg+F9"
 "&Hozzáférés ideje     Ctrl+F9"
 "czasu &użycia                Ctrl+F9"
 "Fecha de &acceso      Ctrl+F9"
@@ -14671,7 +15307,7 @@ MenuSortByDiz
 "&Описания                         Ctrl+F10"
 "&Descriptions           Ctrl+F10"
 "P&opisků                   Ctrl+F10"
-"&Beschreibungen         Strg-F10"
+"&Beschreibungen         Strg+F10"
 "Megjegyzé&sek         Ctrl+F10"
 "&opisu                       Ctrl+F10"
 "&Descripciones        Ctrl+F10"
@@ -14682,7 +15318,7 @@ MenuSortByOwner
 "&Владельцы файлов                 Ctrl+F11"
 "&Owner                  Ctrl+F11"
 "V&lastníka                 Ctrl+F11"
-"Bes&itzer               Strg-F11"
+"Bes&itzer               Strg+F11"
 "Tula&jdonos           Ctrl+F11"
 "&właściciela                 Ctrl+F11"
 "Dueñ&o                Ctrl+F11"
@@ -15909,6 +16545,17 @@ upd:"selected %d items"
 upd:"selected %d items"
 upd:"selected %d items"
 
+SetAttrInfoSelDevices
+"%lsустройств: %d"
+"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+upd:"%lsdevices: %d"
+
 SetAttrInfoSelDirs
 "%lsкаталогов: %d"
 "%lsdirs: %d"
@@ -15998,7 +16645,7 @@ upd:"(current target '%ls')"
 upd:"(current target '%ls')"
 
 SetAttrSymlinkWarn4
-"Пропустить или все-равно изменить объект симлинка?"
+"Пропустить или все равно изменить объект симлинка?"
 "Skip or change symlink target anyway?"
 upd:"Skip or change symlink target anyway?"
 upd:"Skip or change symlink target anyway?"
@@ -16161,6 +16808,28 @@ upd:"(multiple values)"
 "(valores múltiples)"
 "(кілька значень)"
 "(некалькі значэнняў)"
+
+SetAttrOwnerGroupShowId
+"Показывать U&id / Gid"
+"Show Ui&d / Gid"
+"&Zobrazit Uid / Gid"
+"Ui&d / Gid anzeigen"
+"Megjelenítése Ui&d / Gid"
+"Pokaż &Uid / Gid"
+"Mostrar Uid / Gid"
+"Показувати U&id / Gid"
+"Паказваць U&id / Gid"
+
+SetAttrOwnerOriginal
+"Исходное"
+"Original"
+"Originál"
+"Original"
+"Eredeti"
+"Oryginalny"
+"Original"
+"Вихідне"
+"Першасны"
 
 SetAttrModification
 "Время последней &записи:"
@@ -16637,6 +17306,84 @@ upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 upd:"  are displayed and will be modified for the original object"
 
+ChAttrTitle
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+"chattr / chflags"
+
+ChAttrWarnSystem
+"Far2l пока ещё не умеет работать с флагами на Вашей системе"
+"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+upd:"Far2l doesn't know how to handle flags on your system yet"
+
+ChAttrWarnNoOne
+"Применимо только к одному объекту.\nСейчас на панели выбрано несколько объектов."
+"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+upd:"Chattr/chflags only applicable to one object only.\nMultiple objects are currently selected in the panel."
+
+ChAttrWarnNoRealFile
+"Применимо только к реальному объекту доступному локально.\nСейчас на панели плагина не объект реальной файловой системы."
+"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+upd:"Chattr/chflags only applicable to a real object accessible locally.\nCurrently, the plugin panel does not have a real file system object."
+
+ChAttrWarnNoSymlinks
+"Не применимо к символьным ссылкам"
+"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+upd:"Chattr/chflags not applicable to symlinks"
+
+ChAttrErrorGetFlags
+"Не удается получить флаги для \"%ls\":\n"
+"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+upd:"Cannot get flags of \"%ls\":\n"
+
+ChAttrErrorSetFlags
+"Не удается установить флаги для \"%ls\":\n"
+"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+upd:"Cannot chattr for \"%ls\":\n"
+
+
 SetColorPanel
 l:
 "&Панель"
@@ -16791,6 +17538,17 @@ SetBW
 "Modo &blanco y negro"
 "Чорно-біл&ий режим"
 "Чорна-бел&ы рэжым"
+
+Palette
+"П&алитра"
+"P&alette"
+"P&aleta"
+"P&alette"
+"P&aletta"
+"P&aleta"
+"P&aleta"
+"П&алітра"
+"П&алiтра"
 
 SetColorPanelNormal
 l:
@@ -18541,15 +19299,15 @@ LocalMenuTitle
 "Мясцовае меню"
 
 MainMenuBottomTitle
-"Редактирование: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Edit: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Edit: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Bearb.: Entf Einf F4 Ctrl+F4 Ctrl+Alt+F"
-"Szerk.: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Edycja: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Editar: Del Ins F4 Ctrl+Alt+F"
-"Редагування: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
-"Змена: Del Ins F4 Ctrl+F4 Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
+"Del Ins F4 Ctrl+F4 Ctrl+Up/Down Ctrl+Alt+F"
 
 AskDeleteMenuItem
 "Вы хотите удалить пункт меню"
@@ -25288,15 +26046,15 @@ FileHilightTitle
 "Афарбоўка файлаў"
 
 FileFilterName
-"Имя &фильтра:"
-"Filter &name:"
-"Jmé&no filtru:"
-"Filter&name:"
-"Szűrő &neve:"
-"Nazwa &filtra:"
-"&Nombre filtro:"
-"Ім'я &фільтра:"
-"Імя &фільтра:"
+"&Имя:"
+"&Name:"
+"Jmé&no:"
+"&Name:"
+"&Neve:"
+"&Nazwa:"
+"&Nombre:"
+"&Ім'я:"
+"&Імя:"
 
 FileFilterMatchMask
 "&Маска:"
@@ -25873,11 +26631,11 @@ upd:"to create this symbolic link:"
 
 AdminRequiredRecycle
 "для перемещения этого объекта в корзину:"
-"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
-upd:"to move this object to recycle bin:"
+"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
+upd:"to move this object to Trash:"
 "para mover este objeto a la papelera:"
 "для переміщення цього об'єкта в кошик:"
 "для пераносу гэтага аб'екту ў Сметнік:"
@@ -26192,15 +26950,15 @@ upd:"In .editorconfig 'indent_style' set to '%s'"
 "У .editorconfig 'indent_style' усталяваны '%s'"
 
 EditorConfigOrgValueOfCharset
-"В .editorconfig 'charset' установлен '%d'"
-"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-upd:"In .editorconfig 'charset' set to '%d'"
-"У .editorconfig 'charset' встановлено '%d'"
-"У .editorconfig 'charset' усталяваны '%d'"
+"В .editorconfig 'charset' установлен '%ls'"
+"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+upd:"In .editorconfig 'charset' set to '%ls'"
+"У .editorconfig 'charset' встановлено '%ls'"
+"У .editorconfig 'charset' усталяваны '%ls'"
 
 EditorConfigOrgProblemIndentSize
 "В этом случае пользователь не может изменить размер таба по Shift+F5"
@@ -26225,7 +26983,7 @@ upd:"In this case user can't change tab style by Ctrl+F5"
 "У гэтым выпадку карыстач не можа змяніць стыль таба па Ctrl+F5"
 
 EditorConfigOrgProblemCharset
-"В этом случае пользователь не может изменить кодировку по F8 or Shift+F8"
+"В этом случае пользователь не может изменить кодировку по F8 или Shift+F8"
 "In this case user can't change codepage by F8 or Shift+F8"
 upd:"In this case user can't change codepage by F8 or Shift+F8"
 upd:"In this case user can't change codepage by F8 or Shift+F8"
@@ -26300,6 +27058,17 @@ upd:"Context (&lines):"
 upd:"Context (&lines):"
 "&Контекст (рядків):"
 "&Кантэкст (радкоў):"
+
+OSC52Confirm
+"Использовать OSC52 для установки данных буфера обмена (вопрос при первом запуске)\n\nOSC52 позволяет копировать из far2l, работающего в TTY-режиме\n(даже через подключение по SSH), в буфер обмена вашей локальной системы.\n(Если вы используете far2l на удалённой небезопасной системе, предоставление\nей доступа на запись в ваш буфер обмена может быть потенциально небезопасным).\n\nНекоторым терминалам также требуется включение OSC52 в их настройках.\n\nВы можете в любой момент включать/выключать OSC52\nв Меню(F9)->Параметры->Настройки интерфейса.\n\nРазрешить far2l использовать OSC52 для работы с буфером обмена?\n"
+"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+upd:"Use OSC52 to set clipboard data (question at first start)\n\nOSC52 allows copying from far2l running\nin TTY mode (even via SSH connection) to your local system clipboard\n(if you are using far2l on a remote untrusted system, giving remote\nsystem write access to your clipboard may be potentially unsafe).\n\nSome terminals also need OSC52 to be enabled in terminal's settings.\n\nYou can toggle use of OSC52 on/off at any time\nin Menu(F9)->Options->Interface settings.\n\nAllow far2l to set clipboard data using OSC52?\n"
+"Використовувати OSC52 для встановлення даних буфера обміну (запит при першому запуску)\n\nOSC52 дозволяє копіювати з far2l, що працює в режимі TTY\n(навіть через підключення по SSH), до буфера обміну вашої локальної системи.\n(Якщо ви використовуєте far2l на віддаленій небезпечній системі, надання\nдоступу до запису в буфер обміну може бути потенційно небезпечним).\n\nДеяким терміналам також потрібно ввімкнення OSC52 у налаштуваннях терміналу.\n\nВи можете в будь-який момент вмикати/вимикати OSC52\nу Меню(F9)->Параметри->Налаштування інтерфейсу.\n\nДозволити far2l використовувати OSC52 для роботи з буфером обміну?\n"
+"Выкарыстоўваць OSC52 для ўстаноўкі даных буфера абмену (пытанне пры першым запуску)\n\nOSC52 дазваляе капіяваць з far2l, які працуе ў TTY-рэжыме\n(нават праз падключэнне па SSH), у буфер абмену вашай лакальнай сістэмы.\n(Калі вы выкарыстоўваеце far2l на аддаленай ненадзейнай сістэме, прадастаўленне\nдоступу да запісу ў ваш буфер абмену можа быць патэнцыйна небяспечным).\n\nНекаторым тэрміналам таксама трэба ўключыць OSC52 у іх наладках.\n\nВы можаце ў любы момант уключаць/выключаць OSC52\nу Меню(F9)->Параметры->Налады інтэрфейсу.\n\nДазволіць far2l выкарыстоўваць OSC52 для працы з буферам абмену?\n"
 
 #Must be the last
 NewFileName

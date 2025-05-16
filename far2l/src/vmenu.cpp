@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "syslog.hpp"
 #include "interf.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "config.hpp"
 #include "processname.hpp"
 #include "pathmix.hpp"
@@ -1530,6 +1530,9 @@ void VMenu::Show()
 		}
 	}
 
+	if (bFilterEnabled)
+		FilterStringUpdated(true);
+
 	if (X2 > X1 && Y2 + (CheckFlags(VMENU_SHOWNOBOX) ? 1 : 0) > Y1) {
 		if (!CheckFlags(VMENU_LISTBOX)) {
 			ScreenObject::Show();
@@ -1577,6 +1580,11 @@ void VMenu::DisplayObject()
 			SaveScr = new SaveScreen(X1, Y1, X2 + 2, Y2 + 1);
 	}
 
+	if (!CheckFlags(VMENU_LISTBOX)) {
+		DrawTitles();
+		WaitInMainLoop = FALSE;
+	}
+
 	ShowMenu(true, true);
 }
 
@@ -1584,6 +1592,7 @@ void VMenu::DrawEdges()
 {
 	if (!CheckFlags(VMENU_DISABLEDRAWBACKGROUND) && !CheckFlags(VMENU_LISTBOX)) {
 		if (BoxType == SHORT_DOUBLE_BOX || BoxType == SHORT_SINGLE_BOX) {
+			SetScreen(X1, Y1, X2, Y2, L' ', Colors[VMenuColorBody]);
 			Box(X1, Y1, X2, Y2, Colors[VMenuColorBox], BoxType);
 
 			if (!CheckFlags(VMENU_LISTBOX | VMENU_ALWAYSSCROLLBAR)) {
@@ -1924,7 +1933,7 @@ void VMenu::ShowMenu(bool IsParent, bool ForceFrameRedraw)
 				SetColor(Col);
 				Text(CheckMark);
 				// табуляции меняем только при показе!!!
-				// для сохранение оригинальной строки!!!
+				// для сохранения оригинальной строки!!!
 				ReplaceTabsBySpaces(strMenuLine, 1);
 				if (strMItemPtrPrefixLen) {
 					SetColor(VMenu::Colors[Item[I]->Flags & LIF_SELECTED ? VMenuColorSelGrayed : VMenuColorGrayed]);
@@ -2678,7 +2687,9 @@ int VMenu::FindItem(int StartIndex, const wchar_t *Pattern, DWORD Flags)
 		for (int I = StartIndex; I < ItemCount; I++) {
 			FARString strTmpBuf(Item[I]->strName);
 			int LenNamePtr = (int)strTmpBuf.GetLength();
-			RemoveChar(strTmpBuf, L'&');
+			if ( (Flags & LIFIND_KEEPAMPERSAND) == 0) {
+				RemoveChar(strTmpBuf, L'&');
+			}
 
 			if (Flags & LIFIND_EXACTMATCH) {
 				if (!StrCmpNI(strTmpBuf, Pattern, Max(LenPattern, LenNamePtr)))

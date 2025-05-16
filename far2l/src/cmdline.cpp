@@ -68,11 +68,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "vtlog.h"
 #include "vtshell.h"
 #include "vtcompletor.h"
+#include "Environment.h"
+#include "WideMB.h"
 #include <limits>
-
-#include "clipboard.hpp"
-#include "farversion.h"
-#include <sys/utsname.h>
 
 CommandLine::CommandLine()
 	:
@@ -353,6 +351,7 @@ int CommandLine::ProcessKey_Enter(FarKey Key)
 	CmdStr.Select(-1, 0);
 	CmdStr.Show();
 	CmdStr.GetString(strStr);
+	RemoveTrailingSpaces(strStr, true); // RemoveTrailingSpaces and taking into account last escaping sybmol
 
 	if (strStr.IsEmpty())
 		return FALSE;
@@ -869,9 +868,10 @@ void CommandLine::SaveBackground()
 	} else
 		fprintf(stderr, "CommandLine::SaveBackground: no BackgroundScreen\n");
 }
-void CommandLine::ShowBackground()
+
+void CommandLine::ShowBackground(bool showanyway)
 {
-	if (!IsVisible())
+	if (!IsVisible() && !showanyway)
 		return;
 
 	if (BackgroundScreen) {
@@ -910,246 +910,19 @@ void CommandLine::RedrawWithoutComboBoxMark()
 	DrawComboBoxMark(L' ');
 }
 
-void FarAbout(PluginManager &Plugins)
-{
-	int npl;
-	FARString fs, fs2, fs2copy;
-	MenuItemEx mi, mis;
-	mis.Flags = LIF_SEPARATOR;
-
-	VMenu ListAbout(L"far:about",nullptr,0,ScrY-4);
-	ListAbout.SetFlags(VMENU_SHOWAMPERSAND | VMENU_IGNORE_SINGLECLICK);
-	ListAbout.ClearFlags(VMENU_MOUSEREACTION);
-	//ListAbout.SetFlags(VMENU_WRAPMODE);
-	ListAbout.SetHelp(L"SpecCmd");//L"FarAbout");
-	ListAbout.SetBottomTitle(L"ESC or F10 to close, Ctrl-C or Ctrl-Ins - copy all, Ctrl-Alt-F - filtering");
-
-	fs.Format(L"          FAR2L Version: %s", FAR_BUILD);
-	ListAbout.AddItem(fs); fs2copy = fs;
-	fs =      L"               Compiler: ";
-#if defined (__clang__)
-	fs.AppendFormat(L"Clang, version %d.%d.%d", __clang_major__, __clang_minor__, __clang_patchlevel__);
-#elif defined (__INTEL_COMPILER)
-	fs.AppendFormat(L"Intel C/C++, version %d (build date %d)", __INTEL_COMPILER, __INTEL_COMPILER_BUILD_DATE);
-#elif defined (__GNUC__)
-	fs.AppendFormat(L"GCC, version %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-#else
-	fs.Append(L"Unknown");
-#endif
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	fs.Format(L"               Platform: %s", FAR_PLATFORM);
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs.Format(L"                Backend: %ls", WinPortBackend());
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs.Format(L"    ConsoleColorPalette: %u", WINPORT(GetConsoleColorPalette)(NULL) );
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs.Format(L"                  Admin: %ls", Opt.IsUserAdmin ? Msg::FarTitleAddonsAdmin : L"-");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	//apiGetEnvironmentVariable("FARPID", fs2);
-	//fs = L"           PID: " + fs2;
-	fs.Format(L"                    PID: %lu", (unsigned long)getpid());
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	//apiGetEnvironmentVariable("FARLANG", fs2);
-	fs =      L"  Main | Help languages: " + Opt.strLanguage + L" | " + Opt.strHelpLanguage;
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	fs.Format(L"   OEM | ANSI codepages: %u | %u", WINPORT(GetOEMCP)(), WINPORT(GetACP)() );
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	//apiGetEnvironmentVariable("FARHOME", fs2);
-	fs =      L"Far directory (FARHOME): \"" + g_strFarPath.GetMB() + L"\"";
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	fs.Format(L"       Config directory: \"%s\"", InMyConfig("",FALSE).c_str() );
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	fs.Format(L"        Cache directory: \"%s\"", InMyCache("",FALSE).c_str() );
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	fs.Format(L"         Temp directory: \"%s\"", InMyTemp("").c_str() );
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	ListAbout.AddItem(L""); fs2copy += "\n";
-	struct utsname un;
-	fs =      L"                  uname: ";
-	if (uname(&un)==0)
-		fs.AppendFormat(L"%s %s %s %s", un.sysname, un.release, un.version, un.machine);
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   Host: " + (apiGetEnvironmentVariable("HOSTNAME", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   User: " + (apiGetEnvironmentVariable("USER", fs2) ? fs2 : L"???");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"       XDG_SESSION_TYPE: " + (apiGetEnvironmentVariable("XDG_SESSION_TYPE", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"                   TERM: " + (apiGetEnvironmentVariable("TERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"              COLORTERM: " + (apiGetEnvironmentVariable("COLORTERM", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"            GDK_BACKEND: " + (apiGetEnvironmentVariable("GDK_BACKEND", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        DESKTOP_SESSION: " + (apiGetEnvironmentVariable("DESKTOP_SESSION", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"        WSL_DISTRO_NAME: " + (apiGetEnvironmentVariable("WSL_DISTRO_NAME", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-	fs =      L"  WSL2_GUI_APPS_ENABLED: " + (apiGetEnvironmentVariable("WSL2_GUI_APPS_ENABLED", fs2) ? fs2 : L"");
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	ListAbout.AddItem(L""); fs2copy += "\n";
-
-	npl = Plugins.GetPluginsCount();
-	fs.Format(L"      Number of plugins: %d", npl);
-	ListAbout.AddItem(fs); fs2copy += "\n" + fs;
-
-	for(int i = 0; i < npl; i++)
-	{
-		fs.Format(L"Plugin#%02d ",  i+1);
-		mis.strName = fs;
-		mi.PrefixLen = fs.GetLength()-1;
-
-		Plugin *pPlugin = Plugins.GetPlugin(i);
-		if(pPlugin == nullptr) {
-			ListAbout.AddItem(&mis); fs2copy += "\n--- " + mis.strName + " ---";
-			mi.strName = fs + L"!!! ERROR get plugin";
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-			continue;
-		}
-		mis.strName = fs + PointToName(pPlugin->GetModuleName());
-		ListAbout.AddItem(&mis); fs2copy += "\n--- " + mis.strName + " ---";
-
-		mi.strName = fs + pPlugin->GetModuleName();
-		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-
-		mi.strName = fs + L"Settings Name: " + pPlugin->GetSettingsName();
-		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-
-		int iFlags;
-		PluginInfo pInfo{};
-		KeyFileReadHelper kfh(PluginsIni());
-		FARString fsCommandPrefix = L"";
-		FARString fsDiskMenuStrings = L"";
-		FARString fsPluginMenuStrings = L"";
-		FARString fsPluginConfigStrings = L"";
-
-		if (pPlugin->CheckWorkFlags(PIWF_CACHED)) {
-			iFlags = kfh.GetUInt(pPlugin->GetSettingsName(), "Flags", 0);
-			fsCommandPrefix = kfh.GetString(pPlugin->GetSettingsName(), "CommandPrefix", L"");
-			for (int j = 0; ; j++) {
-				const auto &key_name = StrPrintf("DiskMenuString%d", j);
-				/*if (!kfh.HasKey(key_name))
-					break;*/
-				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
-				if( fs2.IsEmpty() )
-					break;
-				fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
-			}
-			for (int j = 0; ; j++) {
-				const auto &key_name = StrPrintf("PluginMenuString%d", j);
-				/*if (!kfh.HasKey(key_name))
-					break;*/
-				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
-				if( fs2.IsEmpty() )
-					break;
-				fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
-			}
-			for (int j = 0; ; j++) {
-				const auto &key_name = StrPrintf("PluginConfigString%d", j);
-				/*if (!kfh.HasKey(key_name))
-					break;*/
-				fs2 = kfh.GetString(pPlugin->GetSettingsName(), key_name, "");
-				if( fs2.IsEmpty() )
-					break;
-				fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\" ", j+1, fs2.CPtr());
-			}
-		}
-		else {
-			if (pPlugin->GetPluginInfo(&pInfo)) {
-				iFlags = pInfo.Flags;
-				fsCommandPrefix = pInfo.CommandPrefix;
-				for (int j = 0; j < pInfo.DiskMenuStringsNumber; j++)
-					fsDiskMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.DiskMenuStrings[j]);
-				for (int j = 0; j < pInfo.PluginMenuStringsNumber; j++)
-					fsPluginMenuStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginMenuStrings[j]);
-				for (int j = 0; j < pInfo.PluginConfigStringsNumber; j++)
-					fsPluginConfigStrings.AppendFormat(L" %d=\"%ls\"", j+1, pInfo.PluginConfigStrings[j]);
-			}
-			else
-				iFlags = -1;
-		}
-
-		mi.strName.Format(L"%ls     %s Cached  %s Loaded ",
-			fs.CPtr(),
-			pPlugin->CheckWorkFlags(PIWF_CACHED) ? "[x]" : "[ ]",
-			pPlugin->GetFuncFlags() & PICFF_LOADED ? "[x]" : "[ ]");
-		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-
-		if (iFlags >= 0) {
-			mi.strName.Format(L"%lsF11: %s Panel   %s Dialog  %s Viewer  %s Editor ",
-				fs.CPtr(),
-				iFlags & PF_DISABLEPANELS ? "[ ]" : "[x]",
-				iFlags & PF_DIALOG ? "[x]" : "[ ]",
-				iFlags & PF_VIEWER ? "[x]" : "[ ]",
-				iFlags & PF_EDITOR ? "[x]" : "[ ]");
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-		}
-
-		mi.strName.Format(L"%ls     %s EditorInput ", fs.CPtr(), pPlugin->HasProcessEditorInput() ? "[x]" : "[ ]");
-		ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-
-		if ( !fsDiskMenuStrings.IsEmpty() ) {
-			mi.strName = fs + L"    DiskMenuStrings:" + fsDiskMenuStrings;
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-		}
-		if ( !fsPluginMenuStrings.IsEmpty() ) {
-			mi.strName = fs + L"  PluginMenuStrings:" + fsPluginMenuStrings;
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-		}
-		if ( !fsPluginConfigStrings.IsEmpty() ) {
-			mi.strName = fs + L"PluginConfigStrings:" + fsPluginConfigStrings;
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-		}
-		if ( !fsCommandPrefix.IsEmpty() ) {
-			mi.strName.Format(L"%ls      CommandPrefix: \"%ls\"", fs.CPtr(), fsCommandPrefix.CPtr());
-			ListAbout.AddItem(&mi); fs2copy += "\n" + mi.strName;
-		}
-		
-	}
-
-	ListAbout.SetPosition(-1, -1, 0, 0);
-	/*int iListExitCode = 0;
-	do {
-		ListAbout.Process();
-		iListExitCode = ListAbout.GetExitCode();
-		if (iListExitCode>=0)
-			ListAbout.ClearDone(); // no close after select item by ENTER or mouse click
-	} while(iListExitCode>=0);*/
-	ListAbout.Show();
-	do {
-		while (!ListAbout.Done()) {
-			FarKey Key = ListAbout.ReadInput();
-			switch (Key) {
-				case KEY_CTRLC:
-				case KEY_CTRLINS:
-				case KEY_CTRLNUMPAD0:
-					CopyToClipboard(fs2copy.CPtr());
-					break;
-				default:
-					ListAbout.ProcessInput();
-					continue;
-			}
-		}
-		if (ListAbout.GetExitCode() < 0) // exit from loop only by ESC or F10 or click outside vmenu
-			break;
-		ListAbout.ClearDone(); // no close after select item by ENTER or mouse click
-	} while(1);
-}
-
 bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 {
 	bool b_far, b_edit = false, b_view = false;
 	std::string::size_type p;
 	std::wstring str_command(CmdLine);
+	auto expandString = [](const std::wstring &Filename) -> std::wstring {
+		std::string new_path_mb;
+		StrWide2MB(Filename, new_path_mb);
+		Environment::ExpandString(new_path_mb, true);
+		std::wstring result;
+		StrMB2Wide(new_path_mb, result);
+		return result;
+	};
 
 	StrTrim(str_command);
 
@@ -1170,6 +943,7 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 	}
 
 	if (b_far && str_command == L"far:about") {
+		void FarAbout(PluginManager &Plugins);
 		FarAbout(CtrlObject->Plugins);
 		return true; // prefix correct and was processed
 	}
@@ -1180,11 +954,24 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			: 0 );
 	if (p > 0) {
 		p = str_command.find_first_not_of(L" \t", p);
-		if (p != std::string::npos) // after spaces found filename
-			new FileEditor(
-				std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ),
-				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
-		else
+		if (p != std::string::npos) { // after spaces found filename or command
+			if (str_command[p]==L'<') { // redirect command
+				p = str_command.find_first_not_of(L" \t", p+1);
+				if (p != std::string::npos) {
+					new FileEditor(
+						std::make_shared<FileHolder>(
+							ExecuteCommandAndGrabItsOutput( str_command.substr(p,std::string::npos).c_str() ) ),
+						CP_AUTODETECT, FFILEEDIT_ENABLEF6 | FFILEEDIT_DISABLEHISTORY);
+				}
+			}
+			else { // filename
+				const std::wstring filename = expandString(str_command.substr(p,std::string::npos));
+				new FileEditor(
+					std::make_shared<FileHolder>( filename.c_str() ),
+					CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
+			}
+		}
+		else // new empty file
 			new FileEditor(
 				std::make_shared<FileHolder>( Msg::NewFileName.CPtr() ),
 				CP_AUTODETECT, FFILEEDIT_CANNEWFILE | FFILEEDIT_ENABLEF6);
@@ -1197,12 +984,35 @@ bool CommandLine::ProcessFarCommands(const wchar_t *CmdLine)
 			: 0 );
 	if (p > 0) {
 		p = str_command.find_first_not_of(L" \t", p);
-		if (p != std::string::npos) // after spaces found filename
-			new FileViewer(std::make_shared<FileHolder>( str_command.substr(p,std::string::npos).c_str() ), TRUE);
+		if (p != std::string::npos) { // after spaces found filename or command
+			if (str_command[p]==L'<') { // redirect command
+				p = str_command.find_first_not_of(L" \t", p+1);
+				if (p != std::string::npos) {
+					new FileViewer(std::make_shared<FileHolder>(
+							ExecuteCommandAndGrabItsOutput( str_command.substr(p,std::string::npos).c_str() ) ),
+					TRUE/*EnableSwitch*/, TRUE/*DisableHistory*/, FALSE/*DisableEdit*/);
+				}
+			}
+			else { // filename
+				const std::wstring filename = expandString(str_command.substr(p,std::string::npos));
+				new FileViewer(std::make_shared<FileHolder>( filename.c_str() ),
+					TRUE/*EnableSwitch*/, FALSE/*DisableHistory*/, FALSE/*DisableEdit*/);
+			}
+		}
 		return true; // anyway prefix correct and was processed
 	}
 
 	return false; // not found any available prefixes
+}
+
+const CHAR_INFO *CommandLine::GetBackgroundScreen(int &W, int &H)
+{
+	if (!BackgroundScreen)
+		return NULL;
+
+	W = (BackgroundScreen->X2 - BackgroundScreen->X1) + 1;
+	H = (BackgroundScreen->Y2 - BackgroundScreen->Y1) + 1;
+	return BackgroundScreen->GetBufferAddress();
 }
 
 CmdLineVisibleScope::CmdLineVisibleScope()
@@ -1220,4 +1030,3 @@ CmdLineVisibleScope::~CmdLineVisibleScope()
 		cp->UpdateCmdLineVisibility();
 	}
 }
-

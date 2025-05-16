@@ -5,6 +5,7 @@ add_subdirectory (bootstrap)
 set(SOURCES
 src/farversion.cpp
 src/cache.cpp
+src/chattr.cpp
 src/clipboard.cpp
 src/cmdline.cpp
 src/copy.cpp
@@ -73,6 +74,7 @@ src/ViewerStrings.cpp
 src/ViewerPrinter.cpp
 src/fileholder.cpp
 src/GrepFile.cpp
+src/about.cpp
 
 src/panels/panel.cpp
 src/panels/filelist.cpp
@@ -93,6 +95,8 @@ src/console/interf.cpp
 src/console/grabber.cpp
 src/console/lockscrn.cpp
 src/console/palette.cpp
+src/console/farcolorexp.cpp
+src/console/farcolors.cpp
 src/console/savescr.cpp
 src/console/scrbuf.cpp
 src/console/scrobj.cpp
@@ -100,7 +104,7 @@ src/console/scrsaver.cpp
 
 src/filemask/CFileMask.cpp
 src/filemask/FileMasksProcessor.cpp
-src/filemask/FileMasksWithExclude.cpp
+#src/filemask/FileMasksWithExclude.cpp
 
 src/locale/codepage.cpp
 src/locale/DetectCodepage.cpp
@@ -119,6 +123,7 @@ src/cfg/ConfigRW.cpp
 src/cfg/ConfigLegacy.cpp
 src/cfg/HotkeyLetterDialog.cpp
 src/cfg/language.cpp
+src/cfg/MaskGroups.cpp
 
 src/hist/history.cpp
 src/hist/poscache.cpp
@@ -132,6 +137,7 @@ src/plug/plclass.cpp
 src/vt/vtansi.cpp
 src/vt/vtshell.cpp
 src/vt/vtshell_translation.cpp
+src/vt/vtshell_translation_kitty.cpp
 src/vt/vtshell_compose.cpp
 src/vt/vtshell_leader.cpp
 src/vt/vtshell_ioreaders.cpp
@@ -278,12 +284,50 @@ add_custom_command(TARGET far2l POST_BUILD
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #TODO
 else()
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit-tty.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2l.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/DE/far2ledit.desktop" "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop")
 
     install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/DE/icons" DESTINATION "share" USE_SOURCE_PERMISSIONS COMPONENT desktop FILES_MATCHING PATTERN "*")
 
-	# Have to make desktop file executable, see:
+	# Have to make desktop files executable, see:
 	# https://wiki.ubuntu.com/SecurityTeam/Policies#Execute-Permission_Bit_Required
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop" DESTINATION "share/applications" COMPONENT desktop
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l-tty.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit-tty.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2l.desktop"
+                  "${CMAKE_CURRENT_BINARY_DIR}/DE/far2ledit.desktop"
+        DESTINATION "share/applications"
+        COMPONENT desktop
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+
+    find_package(Python3 COMPONENTS Interpreter)
+
+    if(Python3_Interpreter_FOUND)
+        execute_process(COMMAND "${Python3_EXECUTABLE}" -c "import markdown"
+                        RESULT_VARIABLE PYTHON_MARKDOWN_STATUS
+                        OUTPUT_QUIET
+                        ERROR_QUIET)
+
+        if(PYTHON_MARKDOWN_STATUS EQUAL 0)
+            add_custom_command(TARGET far2l POST_BUILD
+                               COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/DE/generate_metainfo.py"
+                                       "${CMAKE_SOURCE_DIR}/changelog.md"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/DE/io.github.elfmz.far2l.metainfo.xml.in"
+                                       "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"
+                               DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/DE/generate_metainfo.py"
+                                       "${CMAKE_SOURCE_DIR}/changelog.md"
+                                       "${CMAKE_CURRENT_SOURCE_DIR}/DE/io.github.elfmz.far2l.metainfo.xml.in"
+                               COMMENT "Generating DE/io.github.elfmz.far2l.metainfo.xml"
+                               VERBATIM)
+            install(FILES "${CMAKE_CURRENT_BINARY_DIR}/DE/io.github.elfmz.far2l.metainfo.xml"
+                    DESTINATION "share/metainfo"
+                    COMPONENT desktop)
+        else()
+            message(WARNING "Python-Markdown not found. Skipping AppStream metainfo generation.")
+        endif()
+    else()
+        message(WARNING "Python3 interpreter not found. Skipping AppStream metainfo generation.")
+    endif()
+
 endif()

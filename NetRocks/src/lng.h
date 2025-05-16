@@ -230,6 +230,10 @@ enum LanguageID
 	MSFTPConnectRetries,
 	MSFTPConnectTimeout,
 	MSFTPAllowedHostkeys,
+	MSFTPAllowedKexAlgorithms,
+	MSFTPAllowedHMAC_CS,
+	MSFTPAllowedHMAC_SC,
+	MSFTPProxyCommand,
 	MSFTPOpenSSHConfigs,
 	MSFTPCfgFilesDefault,
 	MSFTPCfgFilesNone,
@@ -316,5 +320,15 @@ enum LanguageID
 	MProxySettingsDisabled,
 	MProxySettingsKind,
 	MProxySettingsEdit,
+
+	MAWSOprionTitle,
+	MAWSUserAgent,
+	MAWSRegion,
+	MAWSUseProxy,
+	MAWSProxyHost,
+	MAWSProxyPort,
+	MAWSAuthProxy,
+	MAWSProxyUsername,
+	MAWSProxyPassword,
 
 };

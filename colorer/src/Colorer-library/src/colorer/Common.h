@@ -9,15 +9,15 @@
 #include "colorer/strings/legacy/strings.h"
 #endif
 
+#if __cplusplus >= 201703L
+# define UNICODE_LITERAL(name, value) inline const auto name = UnicodeString(value);
+#else
+# define UNICODE_LITERAL(name, value) static const auto name = UnicodeString(value);
+#endif
+
 /*
  Logging
 */
 #include "colorer/common/Logger.h"
-
-#ifdef COLORER_USE_DEEPTRACE
-#define CTRACE(info) info
-#else
-#define CTRACE(info)
-#endif
 
 #endif  // COLORER_COMMON_H

@@ -1,6 +1,6 @@
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules)
 
-cmake_minimum_required (VERSION 3.0.2)
+cmake_minimum_required (VERSION 3.5.0)
 
 project (far2l)
 
@@ -40,7 +40,8 @@ if(GIT_FOUND)
     execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tag
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         OUTPUT_VARIABLE GIT_TAG
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
 endif()
 
 if(NOT "${GIT_TAG}" STREQUAL "v_${VERSION}")
@@ -74,7 +75,7 @@ set(VERSION_PATCH "${VERSION_PATCH}-beta")
 set(VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -105,10 +106,6 @@ endif()
 
 if (NOT DEFINED UNRAR)
     set(UNRAR "bundled")
-endif()
-
-if (NOT DEFINED USESPDLOG)
-    set(USESPDLOG "NO")
 endif()
 
 # EACP disabled by default for now as FAR's GetCodePageInfo rejects all multibyte charsets due to BUGBUG.
@@ -144,13 +141,18 @@ endif()
 
 if(${CMAKE_VERSION} VERSION_LESS "3.1.0")
     message("Please consider to switch to newer CMake")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+endif()
+
+if("${ICU_MODE}" STREQUAL "runtime")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRUNTIME_ICU")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRUNTIME_ICU")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99 -fPIC -Wno-unused-function -D_FILE_OFFSET_BITS=64") #  -fsanitize=address
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O2")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_C_FLAGS_RELEASE "-O2")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(APP_DIR ${CMAKE_BINARY_DIR}/install)
@@ -393,11 +395,22 @@ if (NOT DEFINED MULTIARC OR MULTIARC)
 
     find_package(PkgConfig REQUIRED)
     pkg_search_module(LibArchive QUIET libarchive)
-    if(NOT LibArchive_FOUND)
+    find_package(LibArchive)
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         # workaround for MacOS brew's/macports' libarchive
-        if(IS_DIRECTORY "/usr/local/opt/libarchive/include")
-            set(LibArchive_INCLUDE_DIR "/usr/local/opt/libarchive/include")
-            set(LibArchive_LIBRARY "/usr/local/opt/libarchive/lib/libarchive.dylib")
+        execute_process(COMMAND brew --prefix
+            OUTPUT_VARIABLE BREW_PREFIX
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+        if("${BREW_PREFIX}" STREQUAL "")
+            set(BREW_PREFIX "/usr/local")
+            message(STATUS "Fallback BREW_PREFIX=${BREW_PREFIX}")
+        else()
+            message(STATUS "Detected BREW_PREFIX=${BREW_PREFIX}")
+        endif()
+        if(IS_DIRECTORY "${BREW_PREFIX}/opt/libarchive/include")
+            set(LibArchive_INCLUDE_DIR "${BREW_PREFIX}/opt/libarchive/include")
+            set(LibArchive_LIBRARY "${BREW_PREFIX}/opt/libarchive/lib/libarchive.dylib")
         elseif(EXISTS "/opt/local/lib/libarchive.dylib")
             set(LibArchive_LIBRARY "/opt/local/lib/libarchive.dylib")
         endif()
@@ -405,11 +418,6 @@ if (NOT DEFINED MULTIARC OR MULTIARC)
         if(NOT LibArchive_FOUND)
             message(WARNING "${ColorRed}libarchive not found, multiarc will have weaker archives support. Its recommended to install libarchive-dev and reconfigure far2l.${ColorNormal}")
         endif()
-    endif()
-
-    pkg_search_module(PCRE QUIET libpcre)
-    if(NOT PCRE_FOUND)
-        message(WARNING "${ColorRed}libpcre not found, multiarc will have no regexp support in custom archive format descriptions. Install libpcre and reconfigure far2l if you need that functionality.${ColorNormal}")
     endif()
 
     add_subdirectory (multiarc)
@@ -457,6 +465,13 @@ if (NOT DEFINED NETROCKS OR NETROCKS)
         message(WARNING "${ColorRed}libneon not found, NetRocks will not have WebDav protocol support. Install libneon*-dev if you want WebDav protocol available in NetRocks.${ColorNormal}")
     endif(LIBNEON_FOUND)
 
+    find_package(AWSSDK QUIET COMPONENTS s3)
+    if(AWSSDK_FOUND)
+        message(STATUS "aws-sdk-cpp found -> enjoy AWS s3 support in NetRocks")
+    else()
+        message(WARNING "${ColorRed}aws-sdk-cpp not found, NetRocks will not have AWS S3 protocol support. Install aws-sdk-cpp if you want AWS S3 protocol available in NetRocks.${ColorNormal}")
+    endif(AWSSDK_FOUND)
+
     add_subdirectory (NetRocks)
 else()
     message(STATUS "${ColorRed}NETROCKS plugin disabled due to NETROCKS=${NETROCKS}${ColorNormal}")
@@ -465,7 +480,7 @@ else()
         " COMPONENT system)
 endif()
 
-if (DEFINED VIRTUAL_PYTHON)
+if (DEFINED PYTHON AND PYTHON)
     message(STATUS "PYTHON plugin with interpreter from virtualenv enabled")
     add_subdirectory (python)
     # Copy this explicitly cuz generic copier command excludes 'far2l'
@@ -474,40 +489,10 @@ if (DEFINED VIRTUAL_PYTHON)
         COMPONENT base FILES_MATCHING
         PATTERN "*")
 else()
-    if (DEFINED PYTHON AND PYTHON)
-        find_package(Python3 COMPONENTS Interpreter Development)
-
-        if(Python3_FOUND AND Python3_Development_FOUND)
-            message(STATUS "PYTHON plugin enabled")
-            add_subdirectory (python)
-            install(CODE "
-                execute_process(COMMAND echo Python: preparing virtual environment)
-                " COMPONENT system)
-            install(CODE "
-                execute_process(COMMAND ${Python3_EXECUTABLE} -m venv --system-site-packages ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python)
-                " COMPONENT system)
-            install(CODE "
-                execute_process(COMMAND echo Python: installing packages)
-                " COMPONENT system)
-            install(CODE "
-                execute_process(COMMAND ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python/bin/python -m pip install cffi debugpy)
-                " COMPONENT system)
-
-            # Copy this explicitly cuz generic copier command excludes 'far2l'
-            install(DIRECTORY "${INSTALL_DIR}/Plugins/python/plug/far2l"
-                DESTINATION "lib/far2l/Plugins/python/plug/" USE_SOURCE_PERMISSIONS
-                COMPONENT base FILES_MATCHING
-                PATTERN "*")
-        else()
-            message(WARNING "${ColorRed}PYTHON plugin disabled due to missing python3 environment${ColorNormal}")
-        endif ()
-
-    else()
-        message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
-        install(CODE "
-            execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide)
-            " COMPONENT system)
-    endif()
+    message(STATUS "${ColorRed}PYTHON plugin disabled, use -DPYTHON=yes if you need it${ColorNormal}")
+    install(CODE "
+        execute_process(COMMAND rm -f ${CMAKE_INSTALL_PREFIX}/lib/far2l/Plugins/python/plug/python.far-plug-wide)
+        " COMPONENT system)
 endif()
 
 if (NOT DEFINED SIMPLEINDENT OR SIMPLEINDENT)
@@ -536,6 +521,7 @@ endif()
 add_subdirectory (packaging)
 
 add_subdirectory(man)
+add_subdirectory(bash-completion)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(FIXUP_SCRIPT packaging/osx/FixupBundle.cmake)
@@ -552,6 +538,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "lib/far2l" USE_SOURCE_PERMISSIO
     PATTERN "far2l_ttyx.broker"
     PATTERN "plug/*.far-plug-*"
     PATTERN "plug/*.broker"
+    PATTERN "python/plugins" EXCLUDE
 )
 
 install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISSIONS COMPONENT base FILES_MATCHING
@@ -560,7 +547,7 @@ install(DIRECTORY "${INSTALL_DIR}/" DESTINATION "share/far2l" USE_SOURCE_PERMISS
     PATTERN "far2l_*" EXCLUDE
     PATTERN "*.far-plug-*" EXCLUDE
     PATTERN "*.broker" EXCLUDE
-    PATTERN "python/plug/python" EXCLUDE
+    PATTERN "python/plug/far2l" EXCLUDE
     PATTERN "*"
 )
 

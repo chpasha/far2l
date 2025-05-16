@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "stddlg.hpp"
 #include "mkdir.hpp"
 #include "setattr.hpp"
+#include "chattr.hpp"
 #include "filetype.hpp"
 #include "execute.hpp"
 #include "Bookmarks.hpp"
@@ -82,6 +83,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "plugapi.hpp"
 #include "CachedCreds.hpp"
+#include "MountInfo.h"
 
 extern PanelViewSettings ViewSettingsArray[];
 extern size_t SizeViewSettingsArray;
@@ -123,6 +125,11 @@ FileList::FileList()
 	SelFileSize(0),
 	TotalFileSize(0),
 	FreeDiskSize(0),
+	TotalFilePhysSize(0),
+	LargestFilSize(0),
+	LargestFilSizeL(0),
+	LargestFilPhysSize(0),
+	MarkLM(0),
 	LastUpdateTime(0),
 	Height(0),
 	LeftPos(0),
@@ -164,6 +171,9 @@ FileList::FileList()
 	DirectoriesFirst = 1;
 	Columns = PreparePanelView(&ViewSettings);
 	PluginCommand = -1;
+
+	extern int ColumnTypeWidth[32];
+	memcpy(AutoColumnWidth, ColumnTypeWidth, sizeof(int) * 32);
 }
 
 FileList::~FileList()
@@ -1028,7 +1038,7 @@ int FileList::ProcessKey(FarKey Key)
 		case KEY_CTRLSHIFTNUMPAD0:
 		case KEY_CTRLC:				// копировать имена
 		case KEY_CTRLALTINS:
-		case KEY_CTRLALTNUMPAD0:	// копировать UNC-имена
+		case KEY_CTRLALTNUMPAD0:	// копировать реальные (разрешенные) имена
 		case KEY_ALTSHIFTINS:
 		case KEY_ALTSHIFTNUMPAD0:
 		case KEY_ALTSHIFTC:		// копировать полные имена
@@ -1040,8 +1050,8 @@ int FileList::ProcessKey(FarKey Key)
 			{
 				bool FullPath = Key == KEY_CTRLALTINS || Key == KEY_ALTSHIFTINS || Key == KEY_CTRLALTNUMPAD0
 						|| Key == KEY_ALTSHIFTNUMPAD0 || Key == KEY_ALTSHIFTC;
-				bool unc = (Key & (KEY_CTRL | KEY_ALT)) == (KEY_CTRL | KEY_ALT);
-				CopyNames(FullPath, unc);
+				bool RealName = (Key & (KEY_CTRL | KEY_ALT)) == (KEY_CTRL | KEY_ALT);
+				CopyNames(FullPath, RealName);
 			}
 			return TRUE;
 
@@ -1054,7 +1064,7 @@ int FileList::ProcessKey(FarKey Key)
 			/*
 				$ 14.02.2001 VVM
 				+ Ctrl: вставляет имя файла с пассивной панели.
-				+ CtrlAlt: вставляет UNC-имя файла с пассивной панели
+				+ CtrlAlt: вставляет реальное (разрешенное) имя файла с пассивной панели
 			*/
 		case KEY_CTRL | KEY_SEMICOLON:
 		case KEY_CTRL | KEY_ALT | KEY_SEMICOLON: {
@@ -1159,10 +1169,10 @@ int FileList::ProcessKey(FarKey Key)
 
 			return TRUE;
 		}
-		case KEY_CTRLALTBRACKET:			// Вставить сетевое (UNC) путь из левой панели
-		case KEY_CTRLALTBACKBRACKET:		// Вставить сетевое (UNC) путь из правой панели
-		case KEY_ALTSHIFTBRACKET:			// Вставить сетевое (UNC) путь из активной панели
-		case KEY_ALTSHIFTBACKBRACKET:		// Вставить сетевое (UNC) путь из пассивной панели
+		case KEY_CTRLALTBRACKET:			// Вставить реальный (разрешенный) путь из левой панели
+		case KEY_CTRLALTBACKBRACKET:		// Вставить реальный (разрешенный) путь из правой панели
+		case KEY_ALTSHIFTBRACKET:			// Вставить реальный (разрешенный) путь из активной панели
+		case KEY_ALTSHIFTBACKBRACKET:		// Вставить реальный (разрешенный) путь из пассивной панели
 		case KEY_CTRLBRACKET:				// Вставить путь из левой панели
 		case KEY_CTRLBACKBRACKET:			// Вставить путь из правой панели
 		case KEY_CTRLSHIFTBRACKET:			// Вставить путь из активной панели
@@ -1180,6 +1190,16 @@ int FileList::ProcessKey(FarKey Key)
 
 			if (!ListData.IsEmpty() && SetCurPath()) {
 				ShellSetFileAttributes(this);
+				Show();
+			}
+
+			return TRUE;
+		}
+		case KEY_CTRLALTA: {
+			_ALGO(CleverSysLog clv(L"Ctrl-Alt-A"));
+
+			if (!ListData.IsEmpty() && SetCurPath()) {
+				ChattrDialog(this);
 				Show();
 			}
 
@@ -1222,6 +1242,56 @@ int FileList::ProcessKey(FarKey Key)
 			RestoreSelection();
 			return TRUE;
 		}
+		case KEY_CTRLM | KEY_ALT: {
+			if (!Opt.ShowFilenameMarks)
+				Opt.ShowFilenameMarks ^= 1;
+			else {
+				if (!Opt.FilenameMarksAlign)
+					Opt.FilenameMarksAlign ^= 1;
+				else {
+					Opt.ShowFilenameMarks ^= 1;
+					Opt.FilenameMarksAlign ^= 1;
+				}
+			}
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLD | KEY_ALT: {
+			DirectoryNameSettings( );
+
+//			++Opt.DirNameStyle &= 63;
+//			UpdateDefaultColumnTypeWidths( );
+//			UpdateAutoColumnWidth();
+//			Redraw();
+//			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+//			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+//			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLL | KEY_ALT: {
+			Opt.ShowSymlinkSize ^= 1;
+			UpdateAutoColumnWidth();
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
+		case KEY_CTRLN | KEY_ALT: {
+			Opt.FilenameMarksInStatusBar ^= 1;
+			Redraw();
+			Panel *AnotherPanel = CtrlObject->Cp()->GetAnotherPanel(this);
+			AnotherPanel->Update(UPDATE_KEEP_SELECTION);
+			AnotherPanel->Redraw();
+			return TRUE;
+		}
+
 		case KEY_CTRLR: {
 			Update(UPDATE_KEEP_SELECTION | UPDATE_CAN_BE_ANNOYING);
 			Redraw();
@@ -1263,11 +1333,13 @@ int FileList::ProcessKey(FarKey Key)
 			return TRUE;
 		}
 
-		case KEY_CTRL | '`': {
+		case KEY_CTRL | '`':
+		{
 			SetLocation_Directory(CachedHomeDir());
 			return TRUE;
 		}
 
+		case KEY_CTRLBACKSLASH | KEY_ALT:
 		case KEY_CTRLBACKSLASH: {
 			_ALGO(CleverSysLog clv(L"Ctrl-/"));
 			_ALGO(SysLog(L"%ls, FileCount=%d", (PanelMode == PLUGIN_PANEL ? "PluginPanel" : "FilePanel"),
@@ -1291,8 +1363,14 @@ int FileList::ProcessKey(FarKey Key)
 				}
 			}
 
-			if (NeedChangeDir)
-				ChangeDir(WGOOD_SLASH);
+			if (NeedChangeDir) {
+				if ( (Key & KEY_ALT) && (PanelMode != PLUGIN_PANEL) ) { // to mount point only in local FS
+					FARString strFileSystemMountPoint = MountInfo().GetFileSystemMountPoint(strCurDir);
+					ChangeDir(strFileSystemMountPoint.IsEmpty() ? WGOOD_SLASH : strFileSystemMountPoint);
+				}
+				else // to root dir
+					ChangeDir(WGOOD_SLASH);
+			}
 
 			CtrlObject->Cp()->ActivePanel->Show();
 			return TRUE;
@@ -1405,7 +1483,6 @@ int FileList::ProcessKey(FarKey Key)
 
 						if (!strLastFileName.IsEmpty()) {
 							strFileName = strLastFileName;
-							Unquote(strFileName);
 
 							if (IsAbsolutePath(strFileName)) {
 								PluginMode = FALSE;
@@ -2097,7 +2174,7 @@ int FileList::ProcessKey(FarKey Key)
 					&& (Key & ~KEY_ALTSHIFT_BASE) != KEY_ENTER && (Key & ~KEY_ALTSHIFT_BASE) != KEY_ESC
 					&& !IS_KEY_EXTENDED(Key)) {
 				//_SVS(SysLog(L">FastFind: Key=%ls",_FARKEY_ToName(Key)));
-				// Скорректирем уже здесь нужные клавиши, т.к. WaitInFastFind
+				// Скорректируем уже здесь нужные клавиши, т.к. WaitInFastFind
 				// в это время еще равно нулю.
 				static const char Code[] = ")!@#$%^&*(";
 
@@ -2742,7 +2819,7 @@ int FileList::ProcessMouse(MOUSE_EVENT_RECORD *MouseEvent)
 
 			/*
 				$ 21.02.2001 SKV
-				Если пришел DOUBLE_CLICK без предшевствующего ему
+				Если пришел DOUBLE_CLICK без предшествующего ему
 				простого клика, то курсор не перерисовывается.
 				Перересуем его.
 				По идее при нормальном DOUBLE_CLICK, будет
@@ -2936,6 +3013,8 @@ void FileList::SetViewMode(int ViewMode)
 		if (AnotherPanel->GetType() == TREE_PANEL)
 			AnotherPanel->Redraw();
 	}
+
+	UpdateAutoColumnWidth();
 }
 
 void FileList::SetSortMode(int SortMode)
@@ -3271,30 +3350,46 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 	CurPtr = ListData[CurFile];
 	FARString strCurName = CurPtr->strName;
 
+	bool SkipPath = false;
+
 	if (Mode == SELECT_ADDEXT || Mode == SELECT_REMOVEEXT) {
+		if (strCurName == L"..")
+			return 0;
+		strCurName = PointToName(strCurName);
 		size_t pos;
 
-		if (strCurName.RPos(pos, L'.')) {
+		if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
 			// Учтем тот момент, что расширение может содержать символы-разделители
-			strRawMask.Format(L"\"*.%ls\"", strCurName.CPtr() + pos + 1);
+			strRawMask.Format(L"\"?*.%ls\"", strCurName.CPtr() + pos + 1);
 			WrapBrackets = true;
-		} else {
-			strMask = L"*.";
-		}
 
+		} else {
+			// file without extension, e.g.: "readme", ".readme" & "readme."
+			strMask = L"/^(?:[^.]+|\\.[^.]+|.+\\.)$/";
+		}
+		SkipPath = true;
 		Mode = (Mode == SELECT_ADDEXT) ? SELECT_ADD : SELECT_REMOVE;
 	} else {
 		if (Mode == SELECT_ADDNAME || Mode == SELECT_REMOVENAME) {
-			// Учтем тот момент, что имя может содержать символы-разделители
-			strRawMask = L"\"";
-			strRawMask+= strCurName;
+			if (strCurName == L"..")
+				return 0;
+			strCurName = PointToName(strCurName);
+
 			size_t pos;
 
-			if (strRawMask.RPos(pos, L'.') && pos != strRawMask.GetLength() - 1)
-				strRawMask.Truncate(pos);
+			if (strCurName.RPos(pos, L'.') && pos != strCurName.GetLength() - 1 &&  pos != 0) {
+				strCurName.Truncate(pos);
+			}
 
-			strRawMask+= L".*\"";
-			WrapBrackets = true;
+			auto fName = EscapeCmdStr(strCurName.CPtr(), L".^$*+-?()[]{}\\|");    // special PCRE characters
+
+			bool allowEmptyExtension = (!strCurName.RPos(pos, '.') || (pos == 0 || pos == strCurName.GetLength() - 1));
+			bool caseSensitive = Opt.PanelCaseSensitiveCompareSelect;
+
+			strMask.Format(L"/^%ls(?:\\.[^.]+)%ls$/", fName.c_str(), allowEmptyExtension ? L"?" : L"");
+			if (!caseSensitive) strMask+=L"i";
+
+			SkipPath = true;
 			Mode = (Mode == SELECT_ADDNAME) ? SELECT_ADD : SELECT_REMOVE;
 		} else {
 			if (Mode == SELECT_ADD || Mode == SELECT_REMOVE) {
@@ -3379,7 +3474,7 @@ long FileList::SelectFiles(int Mode, const wchar_t *Mask)
 				if (bUseFilter)
 					Match = Filter.FileInFilter(*CurPtr);
 				else {
-					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect);
+					Match = FileMask.Compare(CurPtr->strName, !Opt.PanelCaseSensitiveCompareSelect, SkipPath);
 				}
 			}
 
@@ -3562,6 +3657,9 @@ void FileList::CompareDir()
 	if (SelectedFirst)
 		SortFileList(TRUE);
 
+	if (Another->SelectedFirst)
+		Another->SortFileList(TRUE);
+
 	Redraw();
 	Another->Redraw();
 
@@ -3588,7 +3686,7 @@ void FileList::CopyFiles()
 			if (TestParentFolderName(strSelName)) {
 				strSelName.Truncate(1);
 			}
-			if (!CreateFullPathName(strSelName, FileAttr, strSelName, FALSE)) {
+			if (!CreateFullPathName(strSelName, FileAttr, strSelName, false)) {
 				if (CopyData) {
 					free(CopyData);
 					CopyData = nullptr;
@@ -3618,7 +3716,7 @@ void FileList::CopyFiles()
 	}
 }
 
-void FileList::CopyNames(bool FullPathName, bool UNC)
+void FileList::CopyNames(bool FullPathName, bool RealName)
 {
 	OpenPluginInfo Info{};
 	wchar_t *CopyData = nullptr;
@@ -3650,7 +3748,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 					strQuotedName.Truncate(1);
 				}
 
-				if (!CreateFullPathName(strQuotedName, FileAttr, strQuotedName, UNC)) {
+				if (!CreateFullPathName(strQuotedName, FileAttr, strQuotedName, RealName)) {
 					if (CopyData) {
 						free(CopyData);
 						CopyData = nullptr;
@@ -3717,7 +3815,7 @@ void FileList::CopyNames(bool FullPathName, bool UNC)
 	free(CopyData);
 }
 
-FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, int UNC)
+FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FARString &strDest, bool RealName)
 {
 	FARString strFileName = strDest;
 	const wchar_t *NameLastSlash = LastSlash(Name);
@@ -3726,12 +3824,9 @@ FARString &FileList::CreateFullPathName(const wchar_t *Name, DWORD FileAttr, FAR
 		ConvertNameToFull(strFileName, strFileName);
 	}
 
-	/*
-		$ 29.01.2001 VVM
-		+ По CTRL+ALT+F в командную строку сбрасывается UNC-имя текущего файла.
-	*/
-	/*if (UNC)
-		ConvertNameToUNC(strFileName);*/
+	if (Opt.ClassicHotkeyLinkResolving && RealName) {
+		ConvertNameToReal(strFileName, strFileName);
+	}
 
 	// $ 20.10.2000 SVS Сделаем фичу Ctrl-F опциональной!
 	if (Opt.PanelCtrlFRule) {
@@ -4236,6 +4331,9 @@ void FileList::CountDirSize(DWORD PluginFlags)
 				Item->FileSize = FileSize;
 				Item->PhysicalSize = PhysicalSize;
 				Item->ShowFolderSize = 1;
+				LargestFilSize = std::max(FileSize, LargestFilSize);
+				LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+				LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 			} else
 				break;
 		}
@@ -4257,9 +4355,13 @@ void FileList::CountDirSize(DWORD PluginFlags)
 			ListData[CurFile]->FileSize = FileSize;
 			ListData[CurFile]->PhysicalSize = PhysicalSize;
 			ListData[CurFile]->ShowFolderSize = 1;
+			LargestFilSize = std::max(FileSize, LargestFilSize);
+			LargestFilSizeL = std::max(FileSize, LargestFilSizeL);
+			LargestFilPhysSize = std::max(PhysicalSize, LargestFilPhysSize);
 		}
 	}
 
+	UpdateAutoColumnWidth( );
 	SortFileList(TRUE);
 	ShowFileList(TRUE);
 	CtrlObject->Cp()->Redraw();
@@ -4537,6 +4639,14 @@ const void *FileList::GetItem(int Index)
 
 void FileList::ClearAllItem()
 {
+	if (!PrevDataList.Empty())		//???
+	{
+		for (PrevDataItem **i = PrevDataList.Last(); i; i = PrevDataList.Prev(i)) {
+			if (*i) (*i)->PrevListData.Clear();	//???
+		}
+	}
+
+#if 0
 	// удалим пред.значение.
 	if (!PrevDataList.Empty())		//???
 	{
@@ -4544,5 +4654,7 @@ void FileList::ClearAllItem()
 			i->PrevListData.Clear();	//???
 		}
 	}
+#endif
+
 	SymlinksCache.clear();
 }

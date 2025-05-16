@@ -166,9 +166,10 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	SelFileCount = 0;
 	SelFileSize = 0;
 	TotalFileCount = 0;
-	TotalFileSize = 0;
+	TotalFileSize = TotalFilePhysSize = LargestFilSize = LargestFilSizeL = LargestFilPhysSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
+	MarkLM = 0;
 
 	if (Opt.ShowPanelFree) {
 		uint64_t TotalSize, TotalFree;
@@ -254,9 +255,17 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 			NewPtr->NumberOfLinks = fdata.nHardLinks;
 
 			if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+
 				if ((fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0 || Opt.ScanJunction) {
-					TotalFileSize+= NewPtr->FileSize;
+					TotalFileSize += NewPtr->FileSize;
 				}
+
+				if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT))
+					LargestFilSize = std::max(NewPtr->FileSize, LargestFilSize);
+
+				LargestFilSizeL = std::max(NewPtr->FileSize, LargestFilSizeL);
+				TotalFilePhysSize += NewPtr->PhysicalSize;
+				LargestFilPhysSize = std::max(NewPtr->PhysicalSize, LargestFilPhysSize);
 			}
 
 			NewPtr->SortGroup = DEFAULT_SORT_GROUP;
@@ -373,7 +382,15 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 
 				FAR_FIND_DATA &fdata = PanelData[i].FindData;
 				PluginToFileListItem(&PanelData[i], CurPtr);
-				TotalFileSize+= fdata.nFileSize;
+				TotalFileSize += fdata.nFileSize;
+				TotalFilePhysSize += fdata.nPhysicalSize;
+
+				if ( !(fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) )
+					LargestFilSize = std::max(fdata.nFileSize, LargestFilSize);
+
+				LargestFilSizeL = std::max(fdata.nFileSize, LargestFilSizeL);
+				LargestFilPhysSize = std::max(fdata.nPhysicalSize, LargestFilPhysSize);
+
 				CurPtr->PrevSelected = CurPtr->Selected = false;
 				CurPtr->ShowFolderSize = 0;
 				CurPtr->SortGroup = CtrlObject->HiFiles->GetGroup(CurPtr);
@@ -387,7 +404,7 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	}
 
 	if (Opt.Highlight && !ListData.IsEmpty())
-		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count());
+		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(), false, &MarkLM);
 
 	CreateChangeNotification(FALSE);
 	CorrectPosition();
@@ -410,6 +427,8 @@ void FileList::ReadFileNames(int KeepSelection, int IgnoreVisible, int DrawMessa
 	if (CurFile >= ListData.Count() || StrCmp(ListData[CurFile]->strName, strCurName))
 		if (!GoToFile(strCurName) && !strNextCurName.IsEmpty())
 			GoToFile(strNextCurName);
+
+	UpdateAutoColumnWidth();
 
 	/*
 		$ 13.02.2002 DJ
@@ -570,9 +589,11 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 	SelFileCount = 0;
 	SelFileSize = 0;
 	TotalFileCount = 0;
-	TotalFileSize = 0;
+	TotalFileSize = TotalFilePhysSize = LargestFilSize = LargestFilSizeL = LargestFilPhysSize = 0;
 	CacheSelIndex = -1;
 	CacheSelClearIndex = -1;
+	MarkLM = 0;
+
 	strPluginDizName.Clear();
 
 	if (!ListData.IsEmpty()) {
@@ -641,17 +662,23 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 			TotalFileCount++;
 		}
 
-		TotalFileSize+= CurListData->FileSize;
+		if ( !(CurListData->FileAttr & FILE_ATTRIBUTE_REPARSE_POINT) )
+			LargestFilSize = std::max(CurListData->FileSize, LargestFilSize);
+
+		LargestFilSizeL = std::max(CurListData->FileSize, LargestFilSizeL);
+		TotalFileSize += CurListData->FileSize;
+		TotalFilePhysSize += CurListData->PhysicalSize;
+		LargestFilPhysSize = std::max(CurListData->PhysicalSize, LargestFilPhysSize);
 	}
 	if (!ListData.IsEmpty() && ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING)))
 		CtrlObject->HiFiles->GetHiColor(&ListData[0], ListData.Count(),
-				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
+				(Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &MarkLM);
 
 	if ((Info.Flags & OPIF_ADDDOTS) && !DotsPresent) {
 		FileListItem *CurPtr = ListData.AddParentPoint();
 		if (CurPtr) {
 			if ((Info.Flags & OPIF_USEHIGHLIGHTING) || (Info.Flags & OPIF_USEATTRHIGHLIGHTING))
-				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0);
+				CtrlObject->HiFiles->GetHiColor(&CurPtr, 1, (Info.Flags & OPIF_USEATTRHIGHLIGHTING) != 0, &MarkLM );
 
 			if (Info.HostFile && *Info.HostFile) {
 				FAR_FIND_DATA_EX FindData;
@@ -694,6 +721,7 @@ void FileList::UpdatePlugin(int KeepSelection, int IgnoreVisible)
 		if (!GoToFile(strCurName) && !strNextCurName.IsEmpty())
 			GoToFile(strNextCurName);
 
+	UpdateAutoColumnWidth();
 	SetTitle();
 }
 

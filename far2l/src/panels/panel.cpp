@@ -71,7 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "constitle.hpp"
 #include "DialogBuilder.hpp"
 #include "setattr.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "panel.hpp"
 #include "drivemix.hpp"
 #include "xlat.hpp"
@@ -1704,6 +1704,8 @@ int Panel::SetPluginCommand(int Command, int Param1, LONG_PTR Param2)
 				} PFLAGS[] = {
 						{&Opt.ShowHidden, PFLAGS_SHOWHIDDEN},
 						{&Opt.Highlight,  PFLAGS_HIGHLIGHT },
+						{&Opt.ShowFilenameMarks,   PFLAGS_HL_MARKERS_NOSHOW },
+						{&Opt.FilenameMarksAlign,  PFLAGS_HL_MARKERS_NOALIGN },
 				};
 				DWORD Flags = 0;
 
@@ -1740,6 +1742,12 @@ int Panel::SetPluginCommand(int Command, int Param1, LONG_PTR Param2)
 
 					if (PInfo.Flags & OPIF_USECRC32)
 						Info->Flags|= PFLAGS_USECRC32;
+
+					if (PInfo.Flags & OPIF_HL_MARKERS_NOSHOW)		// (?) condition added by analogy:
+						Info->Flags|= PFLAGS_HL_MARKERS_NOSHOW;		//  may not be completely correct
+
+					if (PInfo.Flags & OPIF_HL_MARKERS_NOALIGN)		// (?) condition added by analogy:
+						Info->Flags|= PFLAGS_HL_MARKERS_NOALIGN;	//  may not be completely correct
 
 					Reenter--;
 				}

@@ -80,12 +80,14 @@ static bool IsAllowedForHistory(const wchar_t *Str)
 		return false;
 
 	FileMasksProcessor fmp;
-	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMPF_ADDASTERISK);
-	if (!fmp.IsEmpty() && fmp.Compare(Str)) {
-		return false;
-	}
+	return !(fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMF_ADDASTERISK) && fmp.Compare(Str,true));
 
-	return true;
+//	fmp.Set(Opt.AutoComplete.Exceptions.CPtr(), FMF_ADDASTERISK);
+//	if (!fmp.IsEmpty() && fmp.Compare(Str, true)) {
+//		return false;
+//	}
+
+//	return true;
 }
 
 /*
@@ -765,10 +767,12 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 				}
 				case KEY_SHIFTNUMDEL:
 				case KEY_SHIFTDEL: {
-					if (HistoryMenu.GetItemCount() /* > 1*/) {
+					if (HistoryMenu.GetShowItemCount() /* > 1*/) {
 						if (!CurrentRecord->Lock) {
 							HistoryMenu.Hide();
 							CurrentItem = HistoryList.Delete(CurrentRecord);
+							CurrentItem = (HistoryRecord *)HistoryMenu.GetUserData(nullptr, sizeof(HistoryRecord *),
+													HistoryMenu.SetSelectPos(Pos.SelectPos - 1, -1, true));
 							//ResetPosition();
 							SaveHistory();
 							HistoryMenu.Modal::SetExitCode(Pos.SelectPos);
@@ -877,11 +881,11 @@ int History::ProcessMenu(FARString &strStr, const wchar_t *Title, VMenu &History
 					}
 					if (TypeHistory == HISTORYTYPE_VIEW && CurrentRecord) {
 						strStr = CurrentRecord->strName;
-						return 9; // for files: Go To Directory & postion to file
+						return 9; // for files: Go To Directory & position to file
 					}
 					if (TypeHistory == HISTORYTYPE_FOLDER && CurrentRecord) {
 						strStr = CurrentRecord->strName;
-						return 1; // for directory is equialent to ENTER
+						return 1; // for directory is equivalent to ENTER
 					}
 					break;
 				}
@@ -1038,7 +1042,7 @@ bool History::GetAllSimilar(VMenu &HistoryMenu, const wchar_t *Str)
 			HistoryItem = HistoryList.Prev(HistoryItem)) {
 		if (!StrCmpNI(Str, HistoryItem->strName, Length) && StrCmp(Str, HistoryItem->strName)
 				&& IsAllowedForHistory(HistoryItem->strName.CPtr())
-				&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr()) < 0) { // after #2241 history may have duplicate names
+				&& HistoryMenu.FindItem(0, HistoryItem->strName.CPtr(), LIFIND_EXACTMATCH | LIFIND_KEEPAMPERSAND) < 0) { // after #2241 history may have duplicate names
 			HistoryMenu.AddItem(HistoryItem->strName);
 		}
 	}

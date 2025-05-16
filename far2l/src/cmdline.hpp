@@ -130,7 +130,7 @@ public:
 
 	void SaveBackground(int X1, int Y1, int X2, int Y2);
 	void SaveBackground();
-	void ShowBackground();
+	void ShowBackground(bool showanyway = false);
 	void CorrectRealScreenCoord();
 	void LockUpdatePanel(int Mode) { Flags.Change(FCMDOBJ_LOCKUPDATEPANEL, Mode); };
 
@@ -139,6 +139,8 @@ public:
 	void RevertAC() { return CmdStr.RevertAC(); }
 
 	void RedrawWithoutComboBoxMark();
+
+	const CHAR_INFO *GetBackgroundScreen(int &W, int &H);
 };
 
 struct CmdLineVisibleScope

@@ -115,7 +115,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 {
 	// kovidgoyal's kitty keyboard protocol (progressive enhancement flags 15) support
 	// CSI [ XXX : XXX : XXX ; XXX : XXX [u~ABCDEFHPQRS]
-	// some parts sometimes ommitted, see docs
+	// some parts sometimes omitted, see docs
 	// https://sw.kovidgoyal.net/kitty/keyboard-protocol/
 
 	// todo: enhanced key flag now set for essential keys only, should be set for more ones
@@ -177,7 +177,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			(s[i] == 'E') || (s[i] == 'F') ||
 			(s[i] == 'H') || (s[i] == 'P') ||
 			(s[i] == 'Q') ||
-			(s[i] == 'R') || // "R" is still vaild here in old kitty versions
+			(s[i] == 'R') || // "R" is still valid here in old kitty versions
 			(s[i] == 'S')
 		);
 
@@ -212,6 +212,12 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	}
 
 	int base_char = params[0][2] ? params[0][2] : params[0][0];
+
+	// fix for xterm in ModifyOtherKeys=2 formatOtherKeys=1 mode
+	if (base_char <= UCHAR_MAX && isalpha(base_char)) {
+		base_char = tolower(base_char);
+	}
+
 	if (base_char <= UCHAR_MAX && isalpha(base_char)) {
 		ir.Event.KeyEvent.wVirtualKeyCode = (base_char - 'a') + 0x41;
 	}
@@ -345,7 +351,7 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'D': ir.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
-		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_NUMPAD5; break;
+		case 'E': ir.Event.KeyEvent.wVirtualKeyCode = VK_CLEAR; break; // NumPad center (5)
 		case 'H': ir.Event.KeyEvent.wVirtualKeyCode = VK_HOME;
 			ir.Event.KeyEvent.dwControlKeyState |= ENHANCED_KEY; break;
 		case 'F': ir.Event.KeyEvent.wVirtualKeyCode = VK_END;
@@ -378,12 +384,25 @@ size_t TTYInputSequenceParser::TryParseAsKittyEscapeSequence(const char *s, size
 	if ((modif_state & KITTY_MOD_CAPSLOCK) && !(modif_state & KITTY_MOD_SHIFT)) {
 		// it's weird, but kitty can not give us uppercase utf8 in caps lock mode
 		// ("text-as-codepoints" mode should solve it, but it is not working for cyrillic chars for unknown reason)
-		ir.Event.KeyEvent.uChar.UnicodeChar = towupper(ir.Event.KeyEvent.uChar.UnicodeChar);
+		// ir.Event.KeyEvent.uChar.UnicodeChar = towupper(ir.Event.KeyEvent.uChar.UnicodeChar);
+		WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
 	}
 
 	ir.Event.KeyEvent.bKeyDown = (event_type != KITTY_EVT_KEYUP) ? 1 : 0;
 
 	ir.Event.KeyEvent.wRepeatCount = 0;
+
+	if ((ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED) ||
+		(ir.Event.KeyEvent.dwControlKeyState & RIGHT_ALT_PRESSED)) {
+		switch (ir.Event.KeyEvent.wVirtualKeyCode) {
+			case VK_ESCAPE: case VK_DELETE: case VK_BACK: case VK_TAB: case VK_RETURN: case VK_SPACE:
+				break;
+			default:
+				if (ir.Event.KeyEvent.uChar.UnicodeChar > 0) {
+					WINPORT(CharUpperBuff)(&ir.Event.KeyEvent.uChar.UnicodeChar, 1);
+				}
+		}
+	}
 
 	_ir_pending.emplace_back(ir);
 
@@ -408,7 +427,7 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 	int args[6] = {0};
 	int args_cnt = 0;
 
-	size_t n;
+	size_t n = 0;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
 			return LIKELY(l < 32) ? TTY_PARSED_WANTMORE : TTY_PARSED_BADSEQUENCE;
@@ -419,8 +438,10 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 			}
 			if (i > n) {
 				args[args_cnt] = atoi(&s[n]);
-				++args_cnt;
+			} else {
+				args[args_cnt] = 0;
 			}
+			++args_cnt;
 			n = i + 1;
 			if (s[i] == '_') {
 				break;
@@ -431,34 +452,15 @@ size_t TTYInputSequenceParser::TryParseAsWinTermEscapeSequence(const char *s, si
 		}
 	}
 
-
-
-	//do not create invalid input event
-	//wVirtualKeyCode, wVirtualScanCode 0 with bKeyDown 1 doesn't make sense
-	if ( !((args[0] == 0) && (args[1] == 0) && (args[3] == 1) && (args[4] == 0)) )
-	{
-		INPUT_RECORD ir = {};
-		ir.EventType = KEY_EVENT;
-		ir.Event.KeyEvent.wVirtualKeyCode = args[0];
-		ir.Event.KeyEvent.wVirtualScanCode = args[1];
-		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
-		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
-		ir.Event.KeyEvent.dwControlKeyState = args[4];
-		ir.Event.KeyEvent.wRepeatCount = args[5];
-		_ir_pending.emplace_back(ir);
-	}
-	else if ((args[0] == 0) && (args[1] == 0) && (args[2] != 0)) {
-		// it can be non-latin paste char event
-		INPUT_RECORD ir = {};
-		ir.EventType = KEY_EVENT;
-		ir.Event.KeyEvent.wVirtualKeyCode = VK_UNASSIGNED;
-		ir.Event.KeyEvent.wVirtualScanCode = 0;
-		ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
-		ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
-		ir.Event.KeyEvent.dwControlKeyState = args[4];
-		ir.Event.KeyEvent.wRepeatCount = args[5];
-		_ir_pending.emplace_back(ir);
-	}
+	INPUT_RECORD ir = {};
+	ir.EventType = KEY_EVENT;
+	ir.Event.KeyEvent.wVirtualKeyCode = args[0] ? args[0] : VK_UNASSIGNED;
+	ir.Event.KeyEvent.wVirtualScanCode = args[1];
+	ir.Event.KeyEvent.uChar.UnicodeChar = args[2];
+	ir.Event.KeyEvent.bKeyDown = (args[3] ? TRUE : FALSE);
+	ir.Event.KeyEvent.dwControlKeyState = args[4];
+	ir.Event.KeyEvent.wRepeatCount = args[5];
+	_ir_pending.emplace_back(ir);
 
 	if (!_using_extension) {
 		fprintf(stderr, "TTYInputSequenceParser: using WinTerm extension\n");
@@ -477,7 +479,7 @@ size_t TTYInputSequenceParser::TryUnwrappWinDoubleEscapeSequence(const char *s, 
 	int args[6] = {0};
 	int args_cnt = 0;
 
-	size_t n;
+	size_t n = 0;
 	for (size_t i = n = 1;; ++i) {
 		if (i == l) {
 			//fprintf(stderr, "\nwant mooore characters... \n");
@@ -489,8 +491,10 @@ size_t TTYInputSequenceParser::TryUnwrappWinDoubleEscapeSequence(const char *s, 
 			}
 			if (i > n) {
 				args[args_cnt] = atoi(&s[n]);
-				++args_cnt;
+			} else {
+				args[args_cnt] = 0;
 			}
+			++args_cnt;
 			n = i + 1;
 			if (s[i] == '_') {
 				break;

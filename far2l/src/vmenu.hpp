@@ -289,14 +289,13 @@ private:
 	bool ItemIsSeparator(DWORD Flags);
 	void UpdateMaxLengthFromTitles();
 	void UpdateMaxLength(int Length);
-	void UpdateItemFlags(int Pos, DWORD NewFlags);
 	void UpdateInternalCounters(DWORD OldFlags, DWORD NewFlags);
 	void RestoreFilteredItems();
 	void FilterStringUpdated(bool bLonger);
 	bool IsFilterEditKey(FarKey Key);
 	bool ShouldSendKeyToFilter(FarKey Key);
 	bool AddToFilter(const wchar_t *str);
-	// коректировка текущей позиции и флагов SELECTED
+	// корректировка текущей позиции и флагов SELECTED
 	void UpdateSelectPos();
 	void EnableFilter(bool Enable);
 
@@ -358,6 +357,8 @@ public:
 	int GetShowItemCount() { return ItemCount - ItemHiddenCount; }
 	int GetVisualPos(int Pos);
 	int VisualPosToReal(int VPos);
+
+	void UpdateItemFlags(int Pos, DWORD NewFlags);
 
 	void *GetUserData(void *Data, int Size, int Position = -1);
 	int GetUserDataSize(int Position = -1);

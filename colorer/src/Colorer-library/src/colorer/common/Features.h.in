@@ -3,16 +3,10 @@
 
 #cmakedefine COLORER_USE_DEEPTRACE
 
-#cmakedefine COLORER_FEATURE_LIBXML
 /**
   If defined, JAR InputSource is implemented.
 */
 #cmakedefine COLORER_FEATURE_ZIPINPUTSOURCE
-
-/**
-  If defined, dummy logger is used.
-*/
-#cmakedefine COLORER_FEATURE_DUMMYLOGGER
 
 /**
   If defined, ICU strings is used.

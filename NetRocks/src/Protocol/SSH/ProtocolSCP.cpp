@@ -307,7 +307,7 @@ class SCPDirectoryEnumer_stat : public SCPDirectoryEnumer
 				return false;
 			}
 
-			std::string line = _cmd.output.substr(0, p), filename;
+			std::string line = _cmd.output.substr(0, p);
 			while (p < _cmd.output.size() && (_cmd.output[p] == '\r' || _cmd.output[p] == '\n')) {
 				++p;
 			}
@@ -472,16 +472,26 @@ ProtocolSCP::ProtocolSCP(const std::string &host, unsigned int port,
 	}
 
 	int busybox_return_code = -1;
+	std::string busybox_cmd;
 	switch (cmd.Execute("readlink /bin/sh")) {
 		case 0:
 			if (cmd.Output().find("busybox") == std::string::npos) {
 				break;
 			}
+			busybox_cmd = cmd.Output();
+			StrTrim(busybox_cmd, "\r\n\t ");
 			// else: fallthrough
 		default:
 			// readlink not exists or /bin/sh not exists and also busybox exists?
 			// Its enough arguments to assume that ls will be handled by busybox.
-			busybox_return_code = cmd.Execute("busybox 2>&1");
+			if (busybox_cmd.empty()) {
+				busybox_cmd = "busybox";
+			} else if (busybox_cmd.front() != '/') {
+				busybox_cmd.insert(0, "/bin/"); // link relative to /bin as its obtained from /bin/sh
+			}
+			busybox_cmd+= " 2>&1";
+			fprintf(stderr, "ProtocolSCP: busybox_cmd='%s'\n", busybox_cmd.c_str());
+			busybox_return_code = cmd.Execute(busybox_cmd);
 	}
 
 	if (busybox_return_code == 0 ||

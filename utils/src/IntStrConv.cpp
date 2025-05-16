@@ -128,21 +128,36 @@ unsigned long DecToULong(const char *str, size_t maxlen, size_t *pos)
 	return out;
 }
 
-bool IsHexaDecimalNumberStr(const char *str)
+long DecToLong(const char *str, size_t maxlen, size_t *pos)
+{
+	const bool minus = maxlen && *str == '-';
+	long out = DecToULong(minus ? str + 1 : str, minus ? maxlen - 1 : maxlen, pos);
+	if (minus) {
+		if (pos) {
+			++*pos;
+		}
+		out = -out;
+	}
+	return out;
+}
+
+NumberKind ClassifyNumberStr(const char *str)
 {
 	if (!*str) {
-		return false;
+		return NK_NOT_NUMBER;
 	}
+	NumberKind out = NK_NUMBER_DEC;
 
 	for (;*str; ++str) {
-		if ((*str < '0' || *str > '9')
-				&& (*str < 'a' || *str > 'f')
-				&& (*str < 'A' || *str > 'F')) {
-			return false;
+		if (*str < '0' || *str > '9') {
+			if ((*str < 'a' || *str > 'f') && (*str < 'A' || *str > 'F')) {
+				return NK_NOT_NUMBER;
+			}
+			out = NK_NUMBER_HEXDEC;
 		}
 	}
 
-	return true;
+	return out;
 }
 
 char MakeHexDigit(const unsigned char c)

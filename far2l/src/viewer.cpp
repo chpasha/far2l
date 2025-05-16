@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "keyboard.hpp"
 #include "lang.hpp"
 #include "colors.hpp"
-#include "palette.hpp"
+#include "farcolors.hpp"
 #include "keys.hpp"
 #include "help.hpp"
 #include "dialog.hpp"
@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "wakeful.hpp"
 #include "WideMB.h"
 #include "UtfConvert.hpp"
+#include <algorithm>
 
 #define MAX_VIEWLINE 0x2000
 
@@ -266,6 +267,12 @@ void Viewer::KeepInitParameters()
 	Opt.ViOpt.ViewerWrap = VM.WordWrap;
 	Opt.ViOpt.SearchRegexp = LastSearchRegexp;
 	InitHex = VM.Hex;
+}
+
+void Viewer::Show()
+{
+	if (!OpenFailed)
+		ScreenObject::Show();
 }
 
 int Viewer::OpenFile(FileHolderPtr NewFileHolder, int warning)
@@ -571,15 +578,19 @@ void Viewer::ShowPage(int nMode)
 				auto visualSelLength = printer->Length(StringI.Chars(StringI.nSelStart),
 						StringI.nSelEnd - StringI.nSelStart);
 
-				if (!VM.Wrap && AdjustSelPosition
-						&& (visualSelStart < LeftPos
-								|| (visualSelStart > LeftPos
-										&& visualSelStart + visualSelLength > LeftPos + XX2 - X1))) {
-					LeftPos = visualSelStart > 1 ? visualSelStart - 1 : 0;
-					AdjustSelPosition = FALSE;
-					Show();
-					return;
+				if (!VM.Wrap && AdjustSelPosition) {
+					const int correctedWidth = Width - (ViOpt.ShowArrows ? 2 : 0);
+					if (visualSelStart < LeftPos || visualSelStart + visualSelLength > LeftPos + correctedWidth) {
+						int newLeftPos = (visualSelLength <= correctedWidth)
+						? (visualSelStart + visualSelLength / 2 - correctedWidth / 2)
+						: (visualSelStart - (ViOpt.ShowArrows ? 1 : 0));
+						LeftPos = std::clamp(newLeftPos, 0, std::max(StrLen - correctedWidth, 0));
+						AdjustSelPosition = FALSE;
+						Show();
+						return;
+					}
 				}
+
 
 				int SelX1 = X1, SelSkip = 0;
 				if (visualSelStart > LeftPos)

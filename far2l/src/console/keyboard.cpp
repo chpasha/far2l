@@ -797,11 +797,12 @@ DWORD GetInputRecord(INPUT_RECORD *rec, bool ExcludeMacro, bool ProcessMouse, bo
 		CalcKey = rec->Event.FocusEvent.bSetFocus ? KEY_GOTFOCUS : KEY_KILLFOCUS;
 		memset(rec, 0, sizeof(*rec));
 		rec->EventType = KEY_EVENT;
-		// чтоб решить баг винды приводящий к появлению скролов и т.п. после потери фокуса
+		/* // чтоб решить баг винды приводящий к появлению скролов и т.п. после потери фокуса
 		if (CalcKey == KEY_GOTFOCUS)
 			RestoreConsoleWindowRect();
 		else
 			SaveConsoleWindowRect();
+   		*/
 
 		return CalcKey;
 	}
@@ -2232,7 +2233,10 @@ FarKey CalcKeyCode(INPUT_RECORD *rec, int RealKey, int *NotMacros)
 				return '9';
 
 			return Modif | (Opt.UseNumPad ? KEY_NUMPAD9 : KEY_PGUP);
+#ifndef __APPLE__
+		// Clear button is used as NumLock emulator on OSX
 		case VK_CLEAR:
+#endif
 		case VK_NUMPAD5:
 
 			if (CtrlState & ENHANCED_KEY) {
